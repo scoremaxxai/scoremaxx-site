@@ -508,14 +508,20 @@ function _rightTriangle(p, seed) {
   var h = _hash(seed || "x");
   var runL = 200 + (h % 3) * 20;          // 200 | 220 | 240
   var riseL = 120 + ((h >> 4) % 3) * 18;  // 120 | 138 | 156
-  var W = 380, H = 280, pad = 52;
+  var W = 380, H = 280;
+
+  // centre the triangle's bounding box in the card. The bottom 34px strip is
+  // reserved for the not-to-scale note, so the box centres in what remains —
+  // anchoring to a fixed corner piled all the slack on one side.
+  var x0 = (W - runL) / 2, x1 = x0 + runL;
+  var y0 = ((H - 34) - riseL) / 2, y1 = y0 + riseL;
 
   // R = right-angle vertex; Hp = end of horizontal leg; Vp = end of vertical leg
   var o = p.right_angle_at || "lower left", R, Hp, Vp;
-  if (o === "lower left")  { R = [pad, H - pad];      Hp = [pad + runL, H - pad];  Vp = [pad, H - pad - riseL]; }
-  if (o === "lower right") { R = [W - pad, H - pad];  Hp = [W - pad - runL, H - pad]; Vp = [W - pad, H - pad - riseL]; }
-  if (o === "upper left")  { R = [pad, pad];          Hp = [pad + runL, pad];      Vp = [pad, pad + riseL]; }
-  if (o === "upper right") { R = [W - pad, pad];      Hp = [W - pad - runL, pad];  Vp = [W - pad, pad + riseL]; }
+  if (o === "lower left")  { R = [x0, y1]; Hp = [x1, y1]; Vp = [x0, y0]; }
+  if (o === "lower right") { R = [x1, y1]; Hp = [x0, y1]; Vp = [x1, y0]; }
+  if (o === "upper left")  { R = [x0, y0]; Hp = [x1, y0]; Vp = [x0, y1]; }
+  if (o === "upper right") { R = [x1, y0]; Hp = [x0, y0]; Vp = [x1, y1]; }
 
   var I = [(R[0] + Hp[0] + Vp[0]) / 3, (R[1] + Hp[1] + Vp[1]) / 3]; // interior
   var g = [];
@@ -549,6 +555,14 @@ function _twoRightTriangles(p, seed) {
   var perp = [-ca[1], ca[0]];                        // rotate 90°: points up-right
   var t = 118 + (_hash(seed || "x") % 3) * 10;
   var D = [C[0] + perp[0] * t, C[1] + perp[1] * t];
+
+  // centre the whole quadrilateral in the card (note strip reserved below)
+  var xs = [A[0], B[0], C[0], D[0]], ys = [A[1], B[1], C[1], D[1]];
+  var minx = Math.min.apply(null, xs), maxx = Math.max.apply(null, xs);
+  var miny = Math.min.apply(null, ys), maxy = Math.max.apply(null, ys);
+  var dx = (W - (maxx - minx)) / 2 - minx, dy = ((H - 34) - (maxy - miny)) / 2 - miny;
+  A = [A[0] + dx, A[1] + dy]; B = [B[0] + dx, B[1] + dy];
+  C = [C[0] + dx, C[1] + dy]; D = [D[0] + dx, D[1] + dy];
 
   var V = p.vertices || ["A", "B", "C", "D"];
   var g = [];
