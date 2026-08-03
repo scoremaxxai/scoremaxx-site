@@ -519,6 +519,9 @@ function _rightTriangle(p, seed) {
 
   var I = [(R[0] + Hp[0] + Vp[0]) / 3, (R[1] + Hp[1] + Vp[1]) / 3]; // interior
   var g = [];
+  // white paper behind the figure — ACT figures are black-on-white, and this
+  // keeps them readable on the app's dark theme without theme coupling
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
   g.push(_line(R, Hp), _line(R, Vp), _line(Hp, Vp));
   if (p.right_angle_mark !== false) g.push(_sqMark(R, Hp, Vp));
 
@@ -549,6 +552,7 @@ function _twoRightTriangles(p, seed) {
 
   var V = p.vertices || ["A", "B", "C", "D"];
   var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
   g.push(_line(A, B), _line(B, C), _line(C, D), _line(A, D));
   g.push(_line(A, C, 1.6));                          // the shared diagonal — never labelled
   g.push(_sqMark(B, A, C));
