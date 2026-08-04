@@ -1706,7 +1706,21 @@ async function startConceptPractice(conceptNo, skillKey, mode){
     const {data:r} = await db.from('math_recipes').select('concept_name').eq('concept_no', conceptNo).limit(1).maybeSingle();
     if(r && r.concept_name) label = r.concept_name;
   }catch(_){}
-  const pool = items.map(it=>adaptMathItem(it, label)).sort(()=>Math.random()-0.5);
+  let pool = items.map(it=>adaptMathItem(it, label)).sort(()=>Math.random()-0.5);
+  // concept 15 only: draw evenly from the two figure kinds (rect / box) so a
+  // 10-question session is always 5 of each, in random order. Other concepts
+  // are untouched.
+  if(conceptNo === 15){
+    const kindOf = q => (q.art_payload && (q.art_payload.kind || q.art_payload.type)) || 'none';
+    const rects = pool.filter(q=>kindOf(q)==='rect'), boxes = pool.filter(q=>kindOf(q)==='box'),
+          rest = pool.filter(q=>kindOf(q)!=='rect' && kindOf(q)!=='box');
+    const mixed = [];
+    for(let i=0; i<Math.max(rects.length, boxes.length); i++){
+      const pair = Math.random() < 0.5 ? [rects[i], boxes[i]] : [boxes[i], rects[i]];
+      pair.forEach(q=>{ if(q) mixed.push(q); });
+    }
+    pool = mixed.concat(rest);
+  }
   let sessionId = null;
   try{
     const {data:sess} = await db.from('practice_sessions').insert({student_id:ME.id, skill:label, total:Math.min(10,pool.length)}).select().single();
