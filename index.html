@@ -635,11 +635,113 @@ function _twoRightTriangles(p, seed) {
 }
 
 /* ── entry point ──────────────────────────────────────────────────────── */
+
+/* ── kind: table — x/y values on the same line (concept 1 surface d) ────── */
+function _xyTable(p) {
+  var xs = p.x, ys = p.y, n = xs.length;
+  var W = 380, H = 90 + 46;
+  var colW = Math.min(70, (W - 100) / n), x0 = (W - (colW * n + 56)) / 2;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  var rows = [["x", xs], ["y", ys]];
+  for (var r = 0; r < 2; r++) {
+    var y = 34 + r * 34;
+    g.push(_txt(x0 + 26, y, rows[r][0]));
+    for (var c = 0; c < n; c++)
+      g.push(_txt(x0 + 56 + colW * c + colW / 2, y, rows[r][1][c]));
+  }
+  // grid lines
+  var top = 16, bot = 16 + 68, right = x0 + 56 + colW * n;
+  g.push(_line([x0, top], [right, top], 1.5));
+  g.push(_line([x0, top + 34], [right, top + 34], 1.5));
+  g.push(_line([x0, bot], [right, bot], 1.5));
+  g.push(_line([x0 + 52, top], [x0 + 52, bot], 1.5));
+  for (var c2 = 1; c2 < n; c2++)
+    g.push(_line([x0 + 56 + colW * c2 - 2, top], [x0 + 56 + colW * c2 - 2, bot], 1));
+  g.push(_line([x0, top], [x0, bot], 1.5));
+  g.push(_line([right, top], [right, bot], 1.5));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="table of x and y values">' + g.join("") + "</svg>";
+}
+
+/* ── kind: fx_table — x, f(x), g(x) (concept 8 surface d) ───────────────── */
+function _fxTable(p) {
+  var xs = p.x, n = xs.length;
+  var W = 380, H = 90 + 80;
+  var colW = Math.min(64, (W - 110) / n), x0 = (W - (colW * n + 64)) / 2;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  var rows = [["x", xs], ["f(x)", p.f], ["g(x)", p.g]];
+  var top = 16, rh = 34, bot = top + rh * 3;
+  for (var r = 0; r < 3; r++) {
+    var y = top + 18 + r * rh;
+    g.push(_txt(x0 + 30, y, rows[r][0]));
+    for (var c = 0; c < n; c++)
+      g.push(_txt(x0 + 64 + colW * c + colW / 2, y, rows[r][1][c]));
+  }
+  var right = x0 + 64 + colW * n;
+  for (var r2 = 0; r2 <= 3; r2++)
+    g.push(_line([x0, top + rh * r2], [right, top + rh * r2], r2 === 0 || r2 === 3 ? 1.5 : 1));
+  g.push(_line([x0, top], [x0, bot], 1.5));
+  g.push(_line([x0 + 60, top], [x0 + 60, bot], 1.5));
+  g.push(_line([right, top], [right, bot], 1.5));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="table of f and g values">' + g.join("") + "</svg>";
+}
+
+/* ── kind: grid — coordinate plane, two marked points, the line through them
+   Unlike every other figure, this one IS to scale: the student reads the
+   coordinates off the picture, so the points must sit exactly where they say. */
+function _grid(p) {
+  var pts = p.points;
+  var W = 380, H = 380, pad = 28;
+  var R = 10;                                    // covers -10..10
+  var sc = (W - 2 * pad) / (2 * R);
+  function X(v) { return pad + (v + R) * sc; }
+  function Y(v) { return H - pad - (v + R) * sc; }
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  // light gridlines
+  for (var i = -R; i <= R; i++) {
+    var w = i === 0 ? 0 : 0.6;
+    if (i !== 0) {
+      g.push('<line x1="' + X(i) + '" y1="' + Y(-R) + '" x2="' + X(i) + '" y2="' + Y(R) + '" stroke="#d8d8d8" stroke-width="0.6"/>');
+      g.push('<line x1="' + X(-R) + '" y1="' + Y(i) + '" x2="' + X(R) + '" y2="' + Y(i) + '" stroke="#d8d8d8" stroke-width="0.6"/>');
+    }
+  }
+  // axes
+  g.push(_line([X(-R), Y(0)], [X(R), Y(0)], 1.6));
+  g.push(_line([X(0), Y(-R)], [X(0), Y(R)], 1.6));
+  // small tick labels at ±5, ±10
+  [[5,0],[10,0],[-5,0],[-10,0]].forEach(function (t) {
+    g.push('<text x="' + X(t[0]) + '" y="' + (Y(0) + 14) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + t[0] + "</text>");
+  });
+  [[0,5],[0,10],[0,-5],[0,-10]].forEach(function (t) {
+    g.push('<text x="' + (X(0) - 10) + '" y="' + (Y(t[1]) + 3) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + t[1] + "</text>");
+  });
+  // the line through the two points, extended to the plot edges
+  var a = pts[0], b = pts[1];
+  var dx = b[0] - a[0], dy = b[1] - a[1];
+  var t1 = 100, pA = [a[0] - dx * t1, a[1] - dy * t1], pB = [a[0] + dx * t1, a[1] + dy * t1];
+  // clip roughly by drawing within the box via clip-path
+  g.push('<clipPath id="gclip"><rect x="' + pad + '" y="' + pad + '" width="' + (W - 2 * pad) + '" height="' + (H - 2 * pad) + '"/></clipPath>');
+  g.push('<line clip-path="url(#gclip)" x1="' + X(pA[0]) + '" y1="' + Y(pA[1]) + '" x2="' + X(pB[0]) + '" y2="' + Y(pB[1]) + '" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  // marked points with coordinate labels
+  pts.forEach(function (pt) {
+    g.push('<circle cx="' + X(pt[0]) + '" cy="' + Y(pt[1]) + '" r="4.5" fill="#111"/>');
+    var lx = X(pt[0]) + (pt[0] >= 0 ? -8 : 8);
+    var anchor = pt[0] >= 0 ? "end" : "start";
+    g.push('<text x="' + lx + '" y="' + (Y(pt[1]) - 9) + '" text-anchor="' + anchor + '" font-size="13px" font-family="' + ART_STYLE.fontFamily + '" fill="#111">(' + pt[0] + ', ' + pt[1] + ')</text>');
+  });
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="coordinate plane with two marked points">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
-  if (!payload || !payload.kind) return "";
-  if (payload.kind === "right_triangle")      return _rightTriangle(payload, itemId);
-  if (payload.kind === "two_right_triangles") return _twoRightTriangles(payload, itemId);
-  /* grid + table (concept 1) come next — same entry point, new kinds */
+  if (!payload) return "";
+  var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
+  if (kind === "right_triangle")      return _rightTriangle(payload, itemId);
+  if (kind === "two_right_triangles") return _twoRightTriangles(payload, itemId);
+  if (kind === "table")               return _xyTable(payload);
+  if (kind === "fx_table")            return _fxTable(payload);
+  if (kind === "grid")                return _grid(payload);
   return "";
 }
 
