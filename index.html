@@ -734,6 +734,54 @@ function _grid(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="coordinate plane with two marked points">' + g.join("") + "</svg>";
 }
 
+/* ── kind: rect — labeled rectangle (area/perimeter cost items) ───────── */
+function _rectFig(p, seed) {
+  var W = 380, H = 280, h = _hash(seed || "x");
+  var rw = 210 + (h % 3) * 20;            // 210 | 230 | 250
+  var rh = 118 + ((h >> 4) % 3) * 14;     // 118 | 132 | 146
+  var x0 = (W - rw) / 2, x1 = x0 + rw;
+  var y0 = ((H - 34) - rh) / 2, y1 = y0 + rh;
+  var TL = [x0, y0], TR = [x1, y0], BR = [x1, y1], BL = [x0, y1];
+  var I = [(x0 + x1) / 2, (y0 + y1) / 2];
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push(_line(TL, TR), _line(TR, BR), _line(BR, BL), _line(BL, TL));
+  var lb = _labelPos(BL, BR, I, 22);      // long side label, centered under its line
+  var ls = _labelPos(TR, BR, I, 30);      // short side label, centered beside its line
+  g.push(_txt(lb[0], lb[1], p.l));
+  g.push(_txt(ls[0], ls[1], p.w, "start"));
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="rectangle ' +
+    _esc(p.l) + ' by ' + _esc(p.w) + '">' + g.join("") + "</svg>";
+}
+
+/* ── kind: box — oblique rectangular box (volume cost items) ──────────── */
+function _boxFig(p, seed) {
+  var W = 380, H = 280, h = _hash(seed || "x");
+  var fw = 175 + (h % 3) * 15;            // front-face width
+  var fh = 86 + ((h >> 4) % 3) * 10;      // front-face height (the depth dim)
+  var ox = 52, oy = -36;                  // receding offset
+  var totW = fw + ox, totH = fh - oy;
+  var x0 = (W - totW) / 2, y1 = ((H - 34) + totH) / 2, y0 = y1 - fh;
+  var A = [x0, y1], B = [x0 + fw, y1], C = [x0 + fw, y0], D = [x0, y0];   // front
+  var E = [D[0] + ox, D[1] + oy], F2 = [C[0] + ox, C[1] + oy], G = [B[0] + ox, B[1] + oy];
+  var I = [(A[0] + G[0]) / 2, (A[1] + F2[1]) / 2];
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push(_line(A, B), _line(B, C), _line(C, D), _line(D, A));   // front face
+  g.push(_line(D, E), _line(C, F2), _line(B, G));               // receding edges
+  g.push(_line(E, F2), _line(F2, G));                           // back top + right
+  var ll = _labelPos(A, B, I, 22);        // length under the front-bottom edge
+  var lw = _labelPos(B, G, I, 20);        // width along the receding edge
+  var ld = _labelPos(A, D, I, 30);        // depth beside the front-left edge
+  g.push(_txt(ll[0], ll[1], p.l));
+  g.push(_txt(lw[0], lw[1], p.w, "start"));
+  g.push(_txt(ld[0], ld[1], p.d, "end"));
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="rectangular box ' +
+    _esc(p.l) + ' by ' + _esc(p.w) + ', depth ' + _esc(p.d) + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -742,6 +790,8 @@ function renderArt(payload, itemId) {
   if (kind === "table")               return _xyTable(payload);
   if (kind === "fx_table")            return _fxTable(payload);
   if (kind === "grid")                return _grid(payload);
+  if (kind === "rect")                return _rectFig(payload, itemId);
+  if (kind === "box")                 return _boxFig(payload, itemId);
   return "";
 }
 
