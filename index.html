@@ -532,16 +532,54 @@ function _rightTriangle(p, seed) {
   if (p.right_angle_mark !== false) g.push(_sqMark(R, Hp, Vp));
 
   // leg_a -> horizontal, leg_b -> vertical, hypotenuse -> slant. One of the
-  // three is the string "x"; the others are the given numbers.
-  var s = p.sides || {};
-  var la = _labelPos(R, Hp, I, 22), lb = _labelPos(R, Vp, I, 24), lh = _labelPos(Hp, Vp, I, 24);
-  g.push(_txt(la[0], la[1], s.leg_a));
-  g.push(_txt(lb[0], lb[1], s.leg_b));
-  g.push(_txt(lh[0], lh[1], s.hypotenuse));
+  // three may be the string "x"; a payload with no sides (trig vertex-letter
+  // items) skips side labels entirely.
+  var s = p.sides || null;
+  if (s) {
+    var la = _labelPos(R, Hp, I, 22), lb = _labelPos(R, Vp, I, 24), lh = _labelPos(Hp, Vp, I, 24);
+    g.push(_txt(la[0], la[1], s.leg_a));
+    g.push(_txt(lb[0], lb[1], s.leg_b));
+    g.push(_txt(lh[0], lh[1], s.hypotenuse));
+  }
+
+  // vertex letters (trig): each letter continues the line it caps, so it sits
+  // centered ON that line's extension — R and Hp extend the horizontal leg,
+  // Vp extends the vertical leg. Textbook convention, and what keeps letters
+  // from floating diagonally off their corners.
+  if (p.vertex_labels) {
+    var VL = p.vertex_labels;
+    var uh = _unit(R[0] - Hp[0], R[1] - Hp[1]);       // along the horizontal leg
+    var uv = _unit(R[0] - Vp[0], R[1] - Vp[1]);       // along the vertical leg
+    if (VL.right) g.push(_txt(R[0] + uh[0] * 20, R[1] + uh[1] * 20, VL.right));
+    if (VL.h_end) g.push(_txt(Hp[0] - uh[0] * 20, Hp[1] - uh[1] * 20, VL.h_end));
+    if (VL.v_end) g.push(_txt(Vp[0] - uv[0] * 20, Vp[1] - uv[1] * 20, VL.v_end));
+  }
+
+  // angle mark (trig): an arc at one acute vertex, optional label like θ
+  if (p.angle_mark && (p.angle_mark.at === "h_end" || p.angle_mark.at === "v_end")) {
+    var P = p.angle_mark.at === "h_end" ? Hp : Vp;
+    var other = p.angle_mark.at === "h_end" ? Vp : Hp;
+    var u1 = _unit(R[0] - P[0], R[1] - P[1]);
+    var u2 = _unit(other[0] - P[0], other[1] - P[1]);
+    var ar = 30;
+    var p1 = [P[0] + u1[0] * ar, P[1] + u1[1] * ar];
+    var p2 = [P[0] + u2[0] * ar, P[1] + u2[1] * ar];
+    var sweep = (u1[0] * u2[1] - u1[1] * u2[0]) > 0 ? 1 : 0;
+    g.push('<path d="M ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1) +
+           ' A ' + ar + ' ' + ar + ' 0 0 ' + sweep + ' ' + p2[0].toFixed(1) + ' ' +
+           p2[1].toFixed(1) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.5"/>');
+    if (p.angle_mark.label) {
+      var bis = _unit(u1[0] + u2[0], u1[1] + u2[1]);
+      g.push(_txt(P[0] + bis[0] * (ar + 16), P[1] + bis[1] * (ar + 16), p.angle_mark.label));
+    }
+  }
   g.push(_txt(W / 2, H - 14, ART_STYLE.note));
 
-  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="right triangle, sides ' +
-    _esc(s.leg_a) + ', ' + _esc(s.leg_b) + ', hypotenuse ' + _esc(s.hypotenuse) + '">' + g.join("") + "</svg>";
+  var aria = s ? "right triangle, sides " + _esc(s.leg_a) + ", " + _esc(s.leg_b) +
+                 ", hypotenuse " + _esc(s.hypotenuse)
+               : "right triangle" + (p.vertex_labels ?
+                 " " + _esc((p.vertex_labels.v_end||"") + (p.vertex_labels.right||"") + (p.vertex_labels.h_end||"")) : "");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + aria + '">' + g.join("") + "</svg>";
 }
 
 /* ── kind: two_right_triangles ────────────────────────────────────────── */
