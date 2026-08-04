@@ -1656,7 +1656,18 @@ async function startConceptPractice(conceptNo, skillKey, mode){
     const {data:r} = await db.from('math_recipes').select('concept_name').eq('concept_no', conceptNo).limit(1).maybeSingle();
     if(r && r.concept_name) label = r.concept_name;
   }catch(_){}
-  const pool = items.map(it=>adaptMathItem(it, label)).sort(()=>Math.random()-0.5);
+  // surface-mix v1: deal evenly across surfaces (recipe_id) so every question
+  // type shows up equally often, no matter how many items each surface holds.
+  const bySurf = {};
+  items.forEach(it=>{ (bySurf[it.recipe_id] = bySurf[it.recipe_id]||[]).push(it); });
+  const groups = Object.values(bySurf).map(g=>g.sort(()=>Math.random()-0.5));
+  const interleaved = [];
+  for(let i=0; groups.some(g=>i<g.length); i++){
+    const round = groups.filter(g=>i<g.length).map(g=>g[i]);
+    round.sort(()=>Math.random()-0.5);
+    interleaved.push(...round);
+  }
+  const pool = interleaved.map(it=>adaptMathItem(it, label));
   let sessionId = null;
   try{
     const {data:sess} = await db.from('practice_sessions').insert({student_id:ME.id, skill:label, total:Math.min(10,pool.length)}).select().single();
