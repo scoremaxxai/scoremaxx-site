@@ -1772,6 +1772,18 @@ async function startConceptPractice(conceptNo, skillKey, mode){
     }
     pool = mixed.map(it=>adaptMathItem(it, label));
   }
+  // concept 19: fixed rotation — word (circle) → endpoint → grid graph → number
+  // line, repeating in that exact order. Random only within each type.
+  if(conceptNo === 19){
+    const ORDER = ['R03D', 'R03B', 'R03A', 'R03C'];
+    const by19 = {};
+    items.forEach(it=>{ (by19[it.recipe_id] = by19[it.recipe_id]||[]).push(it); });
+    const gs = ORDER.map(r=>(by19[r]||[]).sort(()=>Math.random()-0.5));
+    const seq = [];
+    for(let i=0; gs.some(g=>i<g.length); i++)
+      for(const g of gs) if(i<g.length) seq.push(g[i]);
+    pool = seq.map(it=>adaptMathItem(it, label));
+  }
   // concept 15 only: draw evenly from the two figure kinds (rect / box) so a
   // 10-question session is always 5 of each, in random order. Other concepts
   // are untouched.
