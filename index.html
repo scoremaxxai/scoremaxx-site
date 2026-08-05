@@ -882,6 +882,10 @@ function _triAngles(p, seed) {
   if (p.vA) vlab(A, p.vA);
   if (p.vB) vlab(B, p.vB);
   if (p.vC) vlab(C, p.vC);
+  // optional side labels, outward from each edge midpoint
+  if (p.sAB) { var m1 = _labelPos(A, B, I, 20); g.push(_txt(m1[0], m1[1], p.sAB)); }
+  if (p.sBC) { var m2 = _labelPos(B, C, I, 20); g.push(_txt(m2[0], m2[1], p.sBC)); }
+  if (p.sCA) { var m3 = _labelPos(C, A, I, 20); g.push(_txt(m3[0], m3[1], p.sCA)); }
   g.push(_txt(W / 2, H - 14, ART_STYLE.note));
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="triangle with angles ' +
     _esc([p.A, p.B, p.C].filter(Boolean).join(", ")) + '">' + g.join("") + "</svg>";
