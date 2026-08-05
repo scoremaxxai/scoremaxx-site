@@ -1756,7 +1756,22 @@ async function startConceptPractice(conceptNo, skillKey, mode){
     const {data:r} = await db.from('math_recipes').select('concept_name').eq('concept_no', conceptNo).limit(1).maybeSingle();
     if(r && r.concept_name) label = r.concept_name;
   }catch(_){}
-  let pool = items.map(it=>adaptMathItem(it, label)).sort(()=>Math.random()-0.5);
+  // surface cycle: deal one question from each surface (recipe_id) per round,
+  // in random order within the round — question types alternate instead of
+  // clumping. Concept 15 re-deals below by figure kind instead.
+  let pool;
+  {
+    const bySurf = {};
+    items.forEach(it=>{ (bySurf[it.recipe_id] = bySurf[it.recipe_id]||[]).push(it); });
+    const groups = Object.values(bySurf).map(g=>g.sort(()=>Math.random()-0.5));
+    const mixed = [];
+    for(let i=0; groups.some(g=>i<g.length); i++){
+      const round = groups.filter(g=>i<g.length).map(g=>g[i]);
+      round.sort(()=>Math.random()-0.5);
+      mixed.push(...round);
+    }
+    pool = mixed.map(it=>adaptMathItem(it, label));
+  }
   // concept 15 only: draw evenly from the two figure kinds (rect / box) so a
   // 10-question session is always 5 of each, in random order. Other concepts
   // are untouched.
