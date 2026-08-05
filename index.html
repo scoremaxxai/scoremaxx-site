@@ -919,6 +919,31 @@ function _parallelCut(p) {
     _esc(p.top) + ' and ' + _esc(p.bottom) + '">' + g.join("") + "</svg>";
 }
 
+/* ── kind: pgram — parallelogram with base, slant side, dashed height ───── */
+function _pgram(p, seed) {
+  var W = 380, H = 240, h2 = _hash(seed || "x");
+  var bw = 190 + (h2 % 3) * 14, ph = 92 + ((h2 >> 3) % 3) * 8, off = 52;
+  var x0 = (W - bw - off) / 2 + 6, y1 = ((H - 34) + ph) / 2, y0 = y1 - ph;
+  var A = [x0, y1], B = [x0 + bw, y1], C = [x0 + bw + off, y0], D = [x0 + off, y0];
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push(_line(A, B), _line(B, C), _line(C, D), _line(D, A));
+  // dashed height inside, foot on the base under D
+  var F = [D[0], y1];
+  g.push('<line x1="' + D[0] + '" y1="' + y0 + '" x2="' + F[0] + '" y2="' + y1 +
+         '" stroke="' + ART_STYLE.stroke + '" stroke-width="1.6" stroke-dasharray="6 5"/>');
+  g.push(_sqMark(F, [F[0] + 12, y1], [F[0], y1 - 12]));
+  var I = [(A[0] + C[0]) / 2, (A[1] + C[1]) / 2];
+  var lb = _labelPos(A, B, I, 22);
+  g.push(_txt(lb[0], lb[1], p.b));                          // base, centered below
+  var ls = _labelPos(B, C, I, 16);
+  g.push(_txt(ls[0], ls[1], p.s, "start"));                 // slant, right side
+  g.push(_txt(F[0] + 14, (y0 + y1) / 2, p.h, "start"));     // height, beside dash
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="parallelogram base ' +
+    _esc(p.b) + ', side ' + _esc(p.s) + ', height ' + _esc(p.h) + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -934,6 +959,7 @@ function renderArt(payload, itemId) {
   if (kind === "angle_line")          return _angleLine(payload);
   if (kind === "tri_angles")          return _triAngles(payload, itemId);
   if (kind === "parallel_cut")        return _parallelCut(payload);
+  if (kind === "pgram")               return _pgram(payload, itemId);
   return "";
 }
 
