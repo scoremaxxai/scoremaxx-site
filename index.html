@@ -944,6 +944,65 @@ function _pgram(p, seed) {
     _esc(p.b) + ', side ' + _esc(p.s) + ', height ' + _esc(p.h) + '">' + g.join("") + "</svg>";
 }
 
+/* ── kind: cylinder — radius on top, height on the side ─────────────────── */
+function _cylinder(p) {
+  var W = 380, H = 250, cx = 175, ry = 18, rx = 72, yt = 62, yb = 176;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push('<ellipse cx="' + cx + '" cy="' + yt + '" rx="' + rx + '" ry="' + ry + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  g.push('<path d="M ' + (cx - rx) + ' ' + yb + ' A ' + rx + ' ' + ry + ' 0 0 0 ' + (cx + rx) + ' ' + yb + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  g.push('<path d="M ' + (cx - rx) + ' ' + yb + ' A ' + rx + ' ' + ry + ' 0 0 1 ' + (cx + rx) + ' ' + yb + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.3" stroke-dasharray="5 5"/>');
+  g.push(_line([cx - rx, yt], [cx - rx, yb], 2), _line([cx + rx, yt], [cx + rx, yb], 2));
+  g.push(_line([cx, yt], [cx + rx, yt], 1.6));
+  g.push('<circle cx="' + cx + '" cy="' + yt + '" r="2.5" fill="#222"/>');
+  g.push(_txt(cx + rx / 2, yt - ry - 13, p.r));
+  g.push(_txt(cx + rx + 16, (yt + yb) / 2, p.h, "start"));
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="cylinder, radius ' +
+    _esc(p.r) + ', height ' + _esc(p.h) + '">' + g.join("") + "</svg>";
+}
+
+/* ── kind: cone — diameter or radius on the base, height up the axis ────── */
+function _cone(p) {
+  var W = 380, H = 250, cx = 175, ry = 20, rx = 80, yb = 182, ya = 52;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push('<path d="M ' + (cx - rx) + ' ' + yb + ' A ' + rx + ' ' + ry + ' 0 0 0 ' + (cx + rx) + ' ' + yb + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  g.push('<path d="M ' + (cx - rx) + ' ' + yb + ' A ' + rx + ' ' + ry + ' 0 0 1 ' + (cx + rx) + ' ' + yb + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.3" stroke-dasharray="5 5"/>');
+  g.push(_line([cx - rx, yb], [cx, ya], 2), _line([cx + rx, yb], [cx, ya], 2));
+  g.push('<line x1="' + cx + '" y1="' + ya + '" x2="' + cx + '" y2="' + yb + '" stroke="' + ART_STYLE.stroke + '" stroke-width="1.6" stroke-dasharray="6 5"/>');
+  g.push(_sqMark([cx, yb], [cx + 12, yb], [cx, yb - 12]));
+  var gx = cx + rx + 22;
+  g.push(_line([gx, ya], [gx, yb], 1.4));
+  g.push('<path d="M ' + (gx - 5) + ' ' + (ya + 9) + ' L ' + gx + ' ' + ya + ' L ' + (gx + 5) + ' ' + (ya + 9) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.4"/>');
+  g.push('<path d="M ' + (gx - 5) + ' ' + (yb - 9) + ' L ' + gx + ' ' + yb + ' L ' + (gx + 5) + ' ' + (yb - 9) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.4"/>');
+  g.push(_txt(gx + 12, (ya + yb) / 2, p.h, "start"));
+  if (p.d) {
+    g.push(_line([cx - rx, yb], [cx + rx, yb], 1.4));
+    g.push(_txt(cx - rx / 2, yb + 32, p.d));
+  } else {
+    g.push(_line([cx, yb], [cx + rx, yb], 1.4));
+    g.push(_txt(cx + rx / 2, yb + 22, p.r));
+  }
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="cone">' + g.join("") + "</svg>";
+}
+
+/* ── kind: sphere — circle with equator, radius marked ──────────────────── */
+function _sphere(p) {
+  var W = 380, H = 240, cx = 175, cy = 112, r = 74;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  g.push('<path d="M ' + (cx - r) + ' ' + cy + ' A ' + r + ' 20 0 0 0 ' + (cx + r) + ' ' + cy + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.3" stroke-dasharray="5 5"/>');
+  g.push('<circle cx="' + cx + '" cy="' + cy + '" r="2.5" fill="#222"/>');
+  g.push(_line([cx, cy], [cx + r * 0.72, cy - r * 0.6], 1.6));
+  g.push(_txt(cx + r * 0.2, cy - r * 0.42, p.r, "end"));
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="sphere, radius ' +
+    _esc(p.r) + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -960,6 +1019,9 @@ function renderArt(payload, itemId) {
   if (kind === "tri_angles")          return _triAngles(payload, itemId);
   if (kind === "parallel_cut")        return _parallelCut(payload);
   if (kind === "pgram")               return _pgram(payload, itemId);
+  if (kind === "cylinder")            return _cylinder(payload);
+  if (kind === "cone")                return _cone(payload);
+  if (kind === "sphere")              return _sphere(payload);
   return "";
 }
 
