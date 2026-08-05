@@ -830,6 +830,95 @@ function _numLine(p) {
     _esc(p.a) + ' and ' + _esc(p.b) + '">' + g.join("") + "</svg>";
 }
 
+/* ── kind: angle_line — two angles on a straight line (not to scale) ────── */
+function _angleLine(p) {
+  var W = 380, H = 220;
+  var cx = W / 2, cy = 150, x0 = 40, x1 = W - 40;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push(_line([x0, cy], [x1, cy], 2));
+  var ang = 118 * Math.PI / 180;          // the ray, up-left of vertical
+  var rx = cx + Math.cos(ang) * 105, ry = cy - Math.sin(ang) * 105;
+  g.push(_line([cx, cy], [rx, ry], 2));
+  // arcs: left angle (between ray and left arm), right angle (ray to right arm)
+  var r1 = 34, r2 = 46;
+  var aL = Math.PI - 0, aR = 0;
+  function arcTo(r, from, to) {
+    var p1 = [cx + Math.cos(from) * r, cy - Math.sin(from) * r];
+    var p2 = [cx + Math.cos(to) * r, cy - Math.sin(to) * r];
+    return '<path d="M ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1) +
+      ' A ' + r + ' ' + r + ' 0 0 1 ' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1) +
+      '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.5"/>';
+  }
+  g.push(arcTo(r1, ang, 0));              // right angle arc (ray → right arm)
+  g.push(arcTo(r2, Math.PI, ang));        // left angle arc (left arm → ray)
+  var midR = ang / 2, midL = (Math.PI + ang) / 2;
+  g.push(_txt(cx + Math.cos(midR) * (r1 + 26), cy - Math.sin(midR) * (r1 + 26), p.right));
+  g.push(_txt(cx + Math.cos(midL) * (r2 + 30), cy - Math.sin(midL) * (r2 + 30), p.left));
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="angles ' +
+    _esc(p.left) + ' and ' + _esc(p.right) + ' on a straight line">' + g.join("") + "</svg>";
+}
+
+/* ── kind: tri_angles — triangle with angle labels inside (not to scale) ── */
+function _triAngles(p, seed) {
+  var W = 380, H = 250, h = _hash(seed || "x");
+  var A = [70 + (h % 3) * 10, 190], B = [310 - ((h >> 2) % 3) * 10, 190], C = [150 + ((h >> 4) % 4) * 22, 48];
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push(_line(A, B), _line(B, C), _line(C, A));
+  var I = [(A[0] + B[0] + C[0]) / 3, (A[1] + B[1] + C[1]) / 3];
+  function lab(V, t) {
+    var u = _unit(I[0] - V[0], I[1] - V[1]);
+    g.push(_txt(V[0] + u[0] * 34, V[1] + u[1] * 30, t));
+  }
+  if (p.A) lab(A, p.A);
+  if (p.B) lab(B, p.B);
+  if (p.C) lab(C, p.C);
+  function vlab(V, t) {
+    var u = _unit(V[0] - I[0], V[1] - I[1]);
+    g.push(_txt(V[0] + u[0] * 16, V[1] + u[1] * 14, t));
+  }
+  if (p.vA) vlab(A, p.vA);
+  if (p.vB) vlab(B, p.vB);
+  if (p.vC) vlab(C, p.vC);
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="triangle with angles ' +
+    _esc([p.A, p.B, p.C].filter(Boolean).join(", ")) + '">' + g.join("") + "</svg>";
+}
+
+/* ── kind: parallel_cut — two parallel lines and a transversal ──────────── */
+function _parallelCut(p) {
+  var W = 380, H = 260;
+  var y1 = 78, y2 = 178, x0 = 30, x1 = W - 30;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  [y1, y2].forEach(function(y) {
+    g.push(_line([x0, y], [x1, y], 2));
+    g.push('<path d="M ' + (x1 - 10) + ' ' + (y - 5) + ' L ' + x1 + ' ' + y + ' L ' + (x1 - 10) + ' ' + (y + 5) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.6"/>');
+    g.push('<path d="M ' + (x0 + 10) + ' ' + (y - 5) + ' L ' + x0 + ' ' + y + ' L ' + (x0 + 10) + ' ' + (y + 5) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.6"/>');
+  });
+  // transversal through both intersections, slanted
+  var t1 = [150, y1], t2 = [230, y2];
+  var dir = _unit(t2[0] - t1[0], t2[1] - t1[1]);
+  var e1 = [t1[0] - dir[0] * 55, t1[1] - dir[1] * 55];
+  var e2 = [t2[0] + dir[0] * 55, t2[1] + dir[1] * 55];
+  g.push(_line(e1, e2, 2));
+  // label positions relative to each intersection: 'br' below-right etc.
+  function put(at, side, text) {
+    var X = at === "top" ? t1 : t2, y = at === "top" ? y1 : y2;
+    var dx = { br: 34, bl: -40, ar: 40, al: -34 }[side];
+    var dy = { br: 24, bl: 24, ar: -20, al: -20 }[side];
+    // br/bl mean BELOW the line; ar/al ABOVE the line
+    g.push(_txt(X[0] + dx, y + dy, text, dx < 0 ? "end" : "start"));
+  }
+  put("top", p.top_side || "br", p.top);
+  put("bottom", p.bottom_side || "ar", p.bottom);
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="parallel lines cut by a transversal, angles ' +
+    _esc(p.top) + ' and ' + _esc(p.bottom) + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -842,6 +931,9 @@ function renderArt(payload, itemId) {
   if (kind === "box")                 return _boxFig(payload, itemId);
   if (kind === "count_table")         return _countTable(payload);
   if (kind === "numline")             return _numLine(payload);
+  if (kind === "angle_line")          return _angleLine(payload);
+  if (kind === "tri_angles")          return _triAngles(payload, itemId);
+  if (kind === "parallel_cut")        return _parallelCut(payload);
   return "";
 }
 
