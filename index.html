@@ -782,6 +782,34 @@ function _boxFig(p, seed) {
     _esc(p.l) + ' by ' + _esc(p.w) + ', depth ' + _esc(p.d) + '">' + g.join("") + "</svg>";
 }
 
+/* ── kind: count_table — category/count table (probability items) ──────── */
+function _countTable(p) {
+  var rows = p.rows, n = rows.length;
+  var W = 380, rowH = 30, top = 16;
+  var H = top + rowH * (n + 1) + 26;
+  var x0 = 34, x1 = W - 34, xm = x0 + (x1 - x0) * 0.52;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  var hy = top + rowH / 2;
+  var hd = function(x, s){ return '<text x="' + x.toFixed(1) + '" y="' + hy.toFixed(1) +
+    '" text-anchor="middle" dominant-baseline="central" font-family="' + ART_STYLE.fontFamily +
+    '" font-size="13.5px" fill="#111">' + _esc(s) + '</text>'; };
+  g.push(hd((x0 + xm) / 2, p.col1));
+  g.push(hd((xm + x1) / 2, p.col2));
+  for (var r = 0; r < n; r++) {
+    var y = top + rowH * (r + 1) + rowH / 2;
+    g.push(_txt((x0 + xm) / 2, y, rows[r][0]));
+    g.push(_txt((xm + x1) / 2, y, rows[r][1]));
+  }
+  for (var i = 0; i <= n + 1; i++)
+    g.push(_line([x0, top + rowH * i], [x1, top + rowH * i], i <= 1 || i === n + 1 ? 1.5 : 1));
+  g.push(_line([x0, top], [x0, top + rowH * (n + 1)], 1.5));
+  g.push(_line([xm, top], [xm, top + rowH * (n + 1)], 1.5));
+  g.push(_line([x1, top], [x1, top + rowH * (n + 1)], 1.5));
+  var aria = p.col1 + " table: " + rows.map(function(r){ return r[0] + " " + r[1]; }).join(", ");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -792,6 +820,7 @@ function renderArt(payload, itemId) {
   if (kind === "grid")                return _grid(payload);
   if (kind === "rect")                return _rectFig(payload, itemId);
   if (kind === "box")                 return _boxFig(payload, itemId);
+  if (kind === "count_table")         return _countTable(payload);
   return "";
 }
 
