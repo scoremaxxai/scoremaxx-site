@@ -810,6 +810,26 @@ function _countTable(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
 }
 
+/* ── kind: numline — two labeled points on a number line (not to scale) ── */
+function _numLine(p) {
+  var W = 380, H = 150;
+  var y = 62, x0 = 40, x1 = W - 40;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push(_line([x0, y], [x1, y], 2));
+  // arrowheads
+  g.push('<path d="M ' + (x0 + 10) + ' ' + (y - 6) + ' L ' + x0 + ' ' + y + ' L ' + (x0 + 10) + ' ' + (y + 6) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2" stroke-linecap="round"/>');
+  g.push('<path d="M ' + (x1 - 10) + ' ' + (y - 6) + ' L ' + x1 + ' ' + y + ' L ' + (x1 - 10) + ' ' + (y + 6) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2" stroke-linecap="round"/>');
+  var xa = x0 + (x1 - x0) * 0.28, xb = x0 + (x1 - x0) * 0.72;
+  [[xa, p.a], [xb, p.b]].forEach(function(dp) {
+    g.push('<circle cx="' + dp[0].toFixed(1) + '" cy="' + y + '" r="5" fill="#222"/>');
+    g.push(_txt(dp[0], y + 26, dp[1]));
+  });
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="number line with points ' +
+    _esc(p.a) + ' and ' + _esc(p.b) + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -821,6 +841,7 @@ function renderArt(payload, itemId) {
   if (kind === "rect")                return _rectFig(payload, itemId);
   if (kind === "box")                 return _boxFig(payload, itemId);
   if (kind === "count_table")         return _countTable(payload);
+  if (kind === "numline")             return _numLine(payload);
   return "";
 }
 
