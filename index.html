@@ -1015,29 +1015,51 @@ function _circleFig(p) {
   g.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
   g.push('<circle cx="' + cx + '" cy="' + cy + '" r="2.5" fill="#222"/>');
   if (p.angle) {
-    // two radii with the central angle marked between them
-    var a1 = -18 * Math.PI / 180, a2 = -73 * Math.PI / 180;
+    // two radii spanning the TRUE central angle, counterclockwise from a1
+    var deg = parseInt(p.angle, 10) || 60;
+    var a1 = -18 * Math.PI / 180, a2 = a1 - deg * Math.PI / 180;
+    var large = deg > 180 ? 1 : 0;
     var p1 = [cx + Math.cos(a1) * r, cy + Math.sin(a1) * r];
     var p2 = [cx + Math.cos(a2) * r, cy + Math.sin(a2) * r];
     g.push(_line([cx, cy], p1, 1.8), _line([cx, cy], p2, 1.8));
-    var ar = 30, q1 = [cx + Math.cos(a1) * ar, cy + Math.sin(a1) * ar], q2 = [cx + Math.cos(a2) * ar, cy + Math.sin(a2) * ar];
+    var ar = 26, q1 = [cx + Math.cos(a1) * ar, cy + Math.sin(a1) * ar], q2 = [cx + Math.cos(a2) * ar, cy + Math.sin(a2) * ar];
     g.push('<path d="M ' + q1[0].toFixed(1) + ' ' + q1[1].toFixed(1) + ' A ' + ar + ' ' + ar +
-           ' 0 0 0 ' + q2[0].toFixed(1) + ' ' + q2[1].toFixed(1) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.5"/>');
+           ' 0 ' + large + ' 0 ' + q2[0].toFixed(1) + ' ' + q2[1].toFixed(1) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.5"/>');
     var mid = (a1 + a2) / 2;
-    g.push(_txt(cx + Math.cos(mid) * (ar + 24), cy + Math.sin(mid) * (ar + 24), p.angle));
+    if (deg < 40) {
+      // too narrow to fit inside: sit just OUTSIDE the wedge, above the upper radius
+      var tx2 = Math.sin(a2), ty2 = -Math.cos(a2);   // counterclockwise normal
+      g.push(_txt(cx + Math.cos(a2) * 46 + tx2 * 15, cy + Math.sin(a2) * 46 + ty2 * 15, p.angle));
+    } else {
+      var ld = Math.max(ar + 22, Math.min(r - 12, 15 / Math.sin(deg * Math.PI / 360)));
+      g.push(_txt(cx + Math.cos(mid) * ld, cy + Math.sin(mid) * ld, p.angle));
+    }
     // thicker stroke on the intercepted arc itself
     g.push('<path d="M ' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1) + ' A ' + r + ' ' + r +
-           ' 0 0 0 ' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="4"/>');
+           ' 0 ' + large + ' 0 ' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1) + '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="4"/>');
   }
   if (p.d) {
-    g.push(_line([cx - r, cy], [cx + r, cy], 1.6));
-    g.push(_txt(cx - r / 2, cy + 20, p.d));
+    if (p.angle) {
+      // wedge present: run the diameter collinear with the wedge's first side
+      // so the figure never shows two nearly-parallel lines through the center
+      g.push(_line([cx - Math.cos(a1) * r, cy - Math.sin(a1) * r],
+                   [cx + Math.cos(a1) * r, cy + Math.sin(a1) * r], 1.6));
+      var dnx = -Math.sin(a1), dny = Math.cos(a1);
+      if (dnx * Math.cos(mid) + dny * Math.sin(mid) > 0) { dnx = -dnx; dny = -dny; }
+      g.push(_txt(cx - Math.cos(a1) * r * 0.5 + dnx * 16,
+                  cy - Math.sin(a1) * r * 0.5 + dny * 16, p.d));
+    } else {
+      g.push(_line([cx - r, cy], [cx + r, cy], 1.6));
+      g.push(_txt(cx - r / 2, cy + 20, p.d));
+    }
   } else if (p.r) {
-    var ang = p.angle ? 200 * Math.PI / 180 : -35 * Math.PI / 180;
+    // with a wedge, label the radius along the wedge's own first side,
+    // offset to the outside (clockwise) so it never enters the wedge
+    var ang = p.angle ? -18 * Math.PI / 180 : -35 * Math.PI / 180;
     var e = [cx + Math.cos(ang) * r, cy + Math.sin(ang) * r];
-    g.push(_line([cx, cy], e, 1.6));
+    if (!p.angle) g.push(_line([cx, cy], e, 1.6));
     var nx = -Math.sin(ang), ny = Math.cos(ang);   // perpendicular to the radius
-    if (ny > 0) { nx = -nx; ny = -ny; }            // keep the label above the line
+    if (!p.angle && ny > 0) { nx = -nx; ny = -ny; }  // no wedge: label above the line
     var lm = [cx + Math.cos(ang) * r * 0.55 + nx * 17, cy + Math.sin(ang) * r * 0.55 + ny * 17];
     g.push(_txt(lm[0], lm[1], p.r));
   }
