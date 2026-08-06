@@ -1140,6 +1140,50 @@ function _barGraph(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
 }
 
+function _twoWay(p) {
+  var cols = p.cols || [], rows = p.rows || [];
+  var nc = cols.length, nr = rows.length, i, r;
+  var W = 380, rowH = 28, top = 14;
+  var H = top + rowH * (nr + 1) + 20;
+  var x0 = 14, x1 = W - 14;
+  // label column gets extra width; data columns split the rest evenly
+  var labW = Math.max(78, Math.min(120, (x1 - x0) * 0.30));
+  var dw = (x1 - x0 - labW) / (nc - 1);
+  var xs = [x0, x0 + labW];
+  for (i = 1; i < nc; i++) xs.push(x0 + labW + dw * i);
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  function cell(cx, cy, s, bold) {
+    return '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) +
+      '" text-anchor="middle" dominant-baseline="central" font-family="' + ART_STYLE.fontFamily +
+      '" font-size="' + (nc > 4 ? 11.5 : 12.5) + 'px" fill="#111"' +
+      (bold ? ' font-weight="600"' : '') + '>' + _esc(s) + '</text>';
+  }
+  for (i = 0; i < nc; i++)
+    g.push(cell((xs[i] + xs[i + 1]) / 2, top + rowH / 2, cols[i], true));
+  for (r = 0; r < nr; r++) {
+    var cy = top + rowH * (r + 1) + rowH / 2;
+    var isTot = r === nr - 1 && p.totalRow !== false;
+    for (i = 0; i < nc; i++)
+      g.push(cell((xs[i] + xs[i + 1]) / 2, cy, rows[r][i],
+                  isTot || i === 0 || (i === nc - 1 && p.totalCol !== false)));
+  }
+  var yTop = top, yBot = top + rowH * (nr + 1);
+  for (r = 0; r <= nr + 1; r++) {
+    var y = top + rowH * r;
+    var heavy = (r <= 1 || r === nr + 1 || (p.totalRow !== false && r === nr));
+    g.push(_line([x0, y], [x1, y], heavy ? 1.6 : 0.9));
+  }
+  for (i = 0; i <= nc; i++) {
+    var x = i < xs.length ? xs[i] : x1;
+    var hv = (i === 0 || i === 1 || i === nc || (p.totalCol !== false && i === nc - 1));
+    g.push(_line([x, yTop], [x, yBot], hv ? 1.6 : 0.9));
+  }
+  var aria = "two-way table. " + cols.join(", ") + ". " +
+    rows.map(function(rr){ return rr.join(" "); }).join(". ");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -1162,6 +1206,7 @@ function renderArt(payload, itemId) {
   if (kind === "circle_fig")          return _circleFig(payload);
   if (kind === "tape")                return _tapeFig(payload);
   if (kind === "bar")                 return _barGraph(payload);
+  if (kind === "twoway")              return _twoWay(payload);
   return "";
 }
 
