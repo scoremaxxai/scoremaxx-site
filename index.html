@@ -1947,6 +1947,9 @@ async function startConceptPractice(conceptNo, skillKey, mode){
   {
     const bySurf = {};
     items.forEach(it=>{ (bySurf[it.recipe_id] = bySurf[it.recipe_id]||[]).push(it); });
+    // every round contains each type exactly once; the ORDER inside each
+    // round reshuffles (ABCD, DCBA, BDAC, ...) so students must diagnose
+    // the type before solving — interleaving, with guaranteed coverage.
     const groups = Object.values(bySurf).map(g=>g.sort(()=>Math.random()-0.5));
     const mixed = [];
     for(let i=0; groups.some(g=>i<g.length); i++){
