@@ -495,6 +495,28 @@ function _mid(a, b) { return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; }
 /* Label anchor for side a-b: the exact midpoint of the side, offset strictly
  * PERPENDICULAR to it (never along it), on the side away from interior point I.
  * This is what keeps every number visually centered on its own line. */
+/* Approximate rendered width of a label at the figure font size. Used to keep
+   long expression labels (e.g. "3x² − 5x + 4") clear of the lines they label
+   and inside the card — number labels like "12 cm" never needed this. */
+function _tw(s) { return String(s == null ? "" : s).length * 6.4; }
+
+function _txtFit(x, y, s, W) {
+  var half = _tw(s) / 2 + 6;
+  var cx = Math.max(half, Math.min(W - half, x));
+  return _txt(cx, y, s);
+}
+
+/* Outward label position that also accounts for how wide the text is: a label
+   on a steep edge must clear half its own width, not a fixed 20px. */
+function _sideLabelPos(a, b, I, text, pad) {
+  var m = _mid(a, b);
+  var n = _unit(-(b[1] - a[1]), b[0] - a[0]);
+  var toI = [I[0] - m[0], I[1] - m[1]];
+  if (n[0] * toI[0] + n[1] * toI[1] > 0) n = [-n[0], -n[1]];
+  var d = (pad || 14) + Math.abs(n[0]) * (_tw(text) / 2) + Math.abs(n[1]) * 7;
+  return [m[0] + n[0] * d, m[1] + n[1] * d];
+}
+
 function _labelPos(a, b, I, d) {
   var m = _mid(a, b);
   var n = _unit(-(b[1] - a[1]), b[0] - a[0]);          // normal to the side
@@ -738,6 +760,9 @@ function _grid(p) {
 function _rectFig(p, seed) {
   var W = 380, H = 280, h = _hash(seed || "x");
   var rw = 190 + (h % 3) * 18;            // 190 | 208 | 226 — leaves label room
+  // a long width label sits to the right of the box; shrink the box to fit it
+  var _need = _tw(p.w) + 34;
+  while (rw > 120 && (W + rw) / 2 - 12 + _need > W - 8) rw -= 10;
   var rh = 118 + ((h >> 4) % 3) * 14;     // 118 | 132 | 146
   var x0 = (W - rw) / 2 - 12, x1 = x0 + rw;
   var y0 = ((H - 34) - rh) / 2, y1 = y0 + rh;
@@ -748,7 +773,7 @@ function _rectFig(p, seed) {
   g.push(_line(TL, TR), _line(TR, BR), _line(BR, BL), _line(BL, TL));
   var lb = _labelPos(BL, BR, I, 22);      // long side label, centered under its line
   var ls = _labelPos(TR, BR, I, 16);      // short side label, centered beside its line
-  g.push(_txt(lb[0], lb[1], p.l));
+  g.push(_txtFit(lb[0], lb[1], p.l, W));
   g.push(_txt(ls[0], ls[1], p.w, "start"));
   g.push(_txt(W / 2, H - 14, ART_STYLE.note));
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="rectangle ' +
@@ -863,7 +888,11 @@ function _angleLine(p) {
 /* ── kind: tri_angles — triangle with angle labels inside (not to scale) ── */
 function _triAngles(p, seed) {
   var W = 380, H = 250, h = _hash(seed || "x");
-  var A = [70 + (h % 3) * 10, 190], B = [310 - ((h >> 2) % 3) * 10, 190], C = [150 + ((h >> 4) % 4) * 22, 48];
+  // long expression side labels need the triangle pulled in from the edges
+  var _wide = Math.max(_tw(p.sAB), _tw(p.sBC), _tw(p.sCA));
+  var _in = _wide > 60 ? Math.min(46, (_wide - 60) * 0.55) : 0;
+  var A = [70 + _in + (h % 3) * 10, 190], B = [310 - _in - ((h >> 2) % 3) * 10, 190],
+      C = [150 + _in / 2 + ((h >> 4) % 4) * 22, 48];
   var g = [];
   g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
   g.push(_line(A, B), _line(B, C), _line(C, A));
@@ -883,9 +912,9 @@ function _triAngles(p, seed) {
   if (p.vB) vlab(B, p.vB);
   if (p.vC) vlab(C, p.vC);
   // optional side labels, outward from each edge midpoint
-  if (p.sAB) { var m1 = _labelPos(A, B, I, 20); g.push(_txt(m1[0], m1[1], p.sAB)); }
-  if (p.sBC) { var m2 = _labelPos(B, C, I, 20); g.push(_txt(m2[0], m2[1], p.sBC)); }
-  if (p.sCA) { var m3 = _labelPos(C, A, I, 20); g.push(_txt(m3[0], m3[1], p.sCA)); }
+  if (p.sAB) { var m1 = _sideLabelPos(A, B, I, p.sAB, 14); g.push(_txtFit(m1[0], m1[1], p.sAB, W)); }
+  if (p.sBC) { var m2 = _sideLabelPos(B, C, I, p.sBC, 14); g.push(_txtFit(m2[0], m2[1], p.sBC, W)); }
+  if (p.sCA) { var m3 = _sideLabelPos(C, A, I, p.sCA, 14); g.push(_txtFit(m3[0], m3[1], p.sCA, W)); }
   g.push(_txt(W / 2, H - 14, ART_STYLE.note));
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="triangle with angles ' +
     _esc([p.A, p.B, p.C].filter(Boolean).join(", ")) + '">' + g.join("") + "</svg>";
