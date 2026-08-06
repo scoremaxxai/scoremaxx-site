@@ -1213,6 +1213,51 @@ function _twoWay(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
 }
 
+function _ineqLine(p) {
+  var lo = p.min, hi = p.max, pts = p.points || [];
+  var W = 380, H = 96, x0 = 26, x1 = W - 26, y = 46;
+  var sx = function (v) { return x0 + (x1 - x0) * (v - lo) / (hi - lo); };
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  // shaded solution region, drawn first so the ticks sit on top
+  var seg = null;
+  if (p.between && pts.length === 2) {
+    seg = [sx(pts[0].v), sx(pts[1].v)];
+  } else if (pts.length === 1) {
+    seg = p.dir === "left" ? [x0 + 6, sx(pts[0].v)] : [sx(pts[0].v), x1 - 6];
+  }
+  if (seg) {
+    g.push('<line x1="' + seg[0].toFixed(1) + '" y1="' + y + '" x2="' + seg[1].toFixed(1) +
+           '" y2="' + y + '" stroke="' + ART_STYLE.stroke + '" stroke-width="4.5"/>');
+    if (!p.between) {
+      var ax = p.dir === "left" ? x0 + 6 : x1 - 6, s = p.dir === "left" ? 1 : -1;
+      g.push('<path d="M ' + ax + ' ' + y + ' l ' + (s * 9) + ' -5 l 0 10 z" fill="' +
+             ART_STYLE.stroke + '"/>');
+    }
+  }
+  // axis with a tick and label at every integer
+  g.push('<line x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y +
+         '" stroke="' + ART_STYLE.stroke + '" stroke-width="1.4"/>');
+  var step = (hi - lo) > 14 ? 2 : 1;
+  for (var v = lo; v <= hi; v += step) {
+    var X = sx(v);
+    g.push('<line x1="' + X.toFixed(1) + '" y1="' + (y - 5) + '" x2="' + X.toFixed(1) +
+           '" y2="' + (y + 5) + '" stroke="' + ART_STYLE.stroke + '" stroke-width="1.1"/>');
+    g.push('<text x="' + X.toFixed(1) + '" y="' + (y + 22) +
+           '" text-anchor="middle" font-family="' + ART_STYLE.fontFamily +
+           '" font-size="11.5px" fill="#111">' + String(v).replace("-", "\u2212") + '</text>');
+  }
+  // endpoint dots: filled = included, hollow = excluded
+  for (var i = 0; i < pts.length; i++) {
+    var px = sx(pts[i].v);
+    g.push('<circle cx="' + px.toFixed(1) + '" cy="' + y + '" r="5.2" fill="' +
+           (pts[i].closed ? ART_STYLE.stroke : "#ffffff") + '" stroke="' +
+           ART_STYLE.stroke + '" stroke-width="2"/>');
+  }
+  var aria = "number line from " + lo + " to " + hi + " with the solution shaded";
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + aria + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -1236,6 +1281,7 @@ function renderArt(payload, itemId) {
   if (kind === "tape")                return _tapeFig(payload);
   if (kind === "bar")                 return _barGraph(payload);
   if (kind === "twoway")              return _twoWay(payload);
+  if (kind === "ineq_line")           return _ineqLine(payload);
   return "";
 }
 
