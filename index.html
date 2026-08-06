@@ -2165,10 +2165,42 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
     // round reshuffles (ABCD, DCBA, BDAC, ...) so students must diagnose
     // the type before solving — interleaving, with guaranteed coverage.
     const groups = Object.values(bySurf).map(g=>g.sort(()=>Math.random()-0.5));
+    // Scenario spacing: items may tag their scenario as art_payload.ctx (e.g. the
+    // cats-and-dogs table). Two items sharing a ctx should not land close
+    // together, even when they come from different surfaces. Items with no ctx
+    // tag are unaffected.
+    const ctxOf = it => { const p = it && it.art_payload; return (p && p.ctx) || null; };
+    const CTX_WINDOW = 22;   // tuned: minimises repeats inside any 10-question span
+    const recent = [];
+    const seenRecently = c => c && recent.indexOf(c) !== -1;
     const mixed = [];
     for(let i=0; groups.some(g=>i<g.length); i++){
-      const round = groups.filter(g=>i<g.length).map(g=>g[i]);
+      const live = groups.filter(g=>i<g.length);
+      const round = live.map(g=>g[i]);
       round.sort(()=>Math.random()-0.5);
+      // for any item whose scenario is still fresh in memory, try to swap it
+      // with a later item from its own surface that uses a different scenario
+      for(let k=0; k<round.length; k++){
+        const c = ctxOf(round[k]);
+        if(!c) continue;
+        const clash = seenRecently(c) ||
+          round.slice(0, k).some(o=>ctxOf(o) === c);
+        if(!clash) continue;
+        const g = live.find(gr=>gr.indexOf(round[k]) !== -1);
+        if(!g) continue;
+        for(let j=i+1; j<g.length; j++){
+          const alt = ctxOf(g[j]);
+          if(alt && (seenRecently(alt) || round.some(o=>ctxOf(o) === alt))) continue;
+          const at = g.indexOf(round[k]);
+          const tmp = g[at]; g[at] = g[j]; g[j] = tmp;
+          round[k] = g[at];
+          break;
+        }
+      }
+      round.forEach(it=>{
+        const c = ctxOf(it);
+        if(c){ recent.push(c); while(recent.length > CTX_WINDOW) recent.shift(); }
+      });
       mixed.push(...round);
     }
     pool = mixed.map(it=>adaptMathItem(it, label));
