@@ -1069,6 +1069,36 @@ function _circleFig(p) {
     (p.angle ? ", central angle " + _esc(p.angle) : "") + '">' + g.join("") + "</svg>";
 }
 
+function _tapeFig(p) {
+  var W = 380, parts = p.parts || [];
+  var below = p.total || p.known;
+  var H = below ? 152 : 112;
+  var x0 = 34, bw = W - 68, y0 = 32, bh = 38;
+  var s = 0, i;
+  for (i = 0; i < parts.length; i++) s += parts[i];
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  g.push('<rect x="' + x0 + '" y="' + y0 + '" width="' + bw + '" height="' + bh +
+         '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  var acc = x0, segx = [];
+  for (i = 0; i < parts.length; i++) {
+    var w = bw * parts[i] / s;
+    segx.push([acc, acc + w]);
+    if (i > 0) g.push(_line([acc, y0], [acc, y0 + bh], 1.5));
+    g.push(_txt(acc + w / 2, y0 + bh / 2 + 5, String(parts[i])));
+    acc += w;
+  }
+  function dim(xa, xb, y, label) {
+    g.push(_line([xa, y - 5], [xa, y + 5], 1.2), _line([xb, y - 5], [xb, y + 5], 1.2));
+    g.push(_line([xa, y], [xb, y], 1.2));
+    g.push(_txt((xa + xb) / 2, y + 19, label));
+  }
+  if (p.total) dim(x0, x0 + bw, y0 + bh + 16, p.total);
+  if (p.known) dim(segx[p.known.i][0], segx[p.known.i][1], y0 + bh + 16, p.known.v);
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="tape diagram, ratio ' +
+    parts.join(":") + (p.total ? ", total " + _esc(p.total) : "") + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -1089,6 +1119,7 @@ function renderArt(payload, itemId) {
   if (kind === "cone")                return _cone(payload);
   if (kind === "sphere")              return _sphere(payload);
   if (kind === "circle_fig")          return _circleFig(payload);
+  if (kind === "tape")                return _tapeFig(payload);
   return "";
 }
 
