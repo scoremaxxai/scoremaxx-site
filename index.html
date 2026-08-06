@@ -2239,7 +2239,26 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
     // every round contains each type exactly once; the ORDER inside each
     // round reshuffles (ABCD, DCBA, BDAC, ...) so students must diagnose
     // the type before solving — interleaving, with guaranteed coverage.
-    const groups = Object.values(bySurf).map(g=>g.sort(()=>Math.random()-0.5));
+    // Even sub-forms: a surface usually holds two variants (e.g. 15 rays and 15
+    // segments). A blind shuffle lets one variant cluster, so instead shuffle
+    // each variant separately and round-robin them. Items tag their variant as
+    // art_payload.fold; untagged items fall back to a plain shuffle.
+    const foldOf = it => { const p = it && it.art_payload; return (p && p.fold) || null; };
+    function stratify(g){
+      const by = {}, order = [];
+      g.forEach(it=>{ const f = foldOf(it) || '_'; if(!by[f]){ by[f] = []; order.push(f); } by[f].push(it); });
+      if(order.length < 2) return g.sort(()=>Math.random()-0.5);
+      order.forEach(k=>by[k].sort(()=>Math.random()-0.5));
+      order.sort(()=>Math.random()-0.5);          // which variant leads varies by session
+      const out = [];
+      for(let i=0; out.length < g.length; i++){
+        let placed = false;
+        for(const k of order){ if(i < by[k].length){ out.push(by[k][i]); placed = true; } }
+        if(!placed) break;
+      }
+      return out;
+    }
+    const groups = Object.values(bySurf).map(stratify);
     // Scenario spacing: items may tag their scenario as art_payload.ctx (e.g. the
     // cats-and-dogs table). Two items sharing a ctx should not land close
     // together, even when they come from different surfaces. Items with no ctx
@@ -2263,13 +2282,19 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
         if(!clash) continue;
         const g = live.find(gr=>gr.indexOf(round[k]) !== -1);
         if(!g) continue;
+        const myFold = foldOf(round[k]);
+        let swapAt = -1, fallback = -1;
         for(let j=i+1; j<g.length; j++){
           const alt = ctxOf(g[j]);
           if(alt && (seenRecently(alt) || round.some(o=>ctxOf(o) === alt))) continue;
+          if(foldOf(g[j]) === myFold){ swapAt = j; break; }   // keeps folds even
+          if(fallback === -1) fallback = j;
+        }
+        if(swapAt === -1) swapAt = fallback;
+        if(swapAt !== -1){
           const at = g.indexOf(round[k]);
-          const tmp = g[at]; g[at] = g[j]; g[j] = tmp;
+          const tmp = g[at]; g[at] = g[swapAt]; g[swapAt] = tmp;
           round[k] = g[at];
-          break;
         }
       }
       round.forEach(it=>{
