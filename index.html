@@ -1099,6 +1099,47 @@ function _tapeFig(p) {
     parts.join(":") + (p.total ? ", total " + _esc(p.total) : "") + '">' + g.join("") + "</svg>";
 }
 
+function _barGraph(p) {
+  var cats = p.cats || [], vals = p.vals || [];
+  var n = cats.length, i;
+  var W = 380, H = 236;
+  var x0 = 52, x1 = W - 18, yb = H - 46, yt = 30;
+  var step = p.step || 10, ymax = p.ymax || step * 5;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  if (p.title) g.push(_txt(W / 2, 18, p.title));
+  // horizontal gridlines + y-axis tick labels
+  for (var v = 0; v <= ymax + 0.001; v += step) {
+    var y = yb - (yb - yt) * v / ymax;
+    g.push('<line x1="' + x0 + '" y1="' + y.toFixed(1) + '" x2="' + x1 + '" y2="' + y.toFixed(1) +
+           '" stroke="#c8ccd4" stroke-width="' + (v === 0 ? 0 : 1) + '"/>');
+    g.push('<text x="' + (x0 - 8) + '" y="' + y.toFixed(1) +
+           '" text-anchor="end" dominant-baseline="central" font-family="' + ART_STYLE.fontFamily +
+           '" font-size="12px" fill="#111">' + v + '</text>');
+  }
+  // bars
+  var slot = (x1 - x0) / n, bw = Math.min(slot * 0.58, 42);
+  for (i = 0; i < n; i++) {
+    var cx = x0 + slot * (i + 0.5);
+    var bh = (yb - yt) * vals[i] / ymax;
+    g.push('<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + (yb - bh).toFixed(1) +
+           '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) +
+           '" fill="#dfe3ea" stroke="' + ART_STYLE.stroke + '" stroke-width="1.5"/>');
+    g.push('<text x="' + cx.toFixed(1) + '" y="' + (yb + 17) +
+           '" text-anchor="middle" font-family="' + ART_STYLE.fontFamily +
+           '" font-size="12px" fill="#111">' + _esc(cats[i]) + '</text>');
+  }
+  // axes
+  g.push(_line([x0, yt - 6], [x0, yb], 1.8), _line([x0, yb], [x1, yb], 1.8));
+  if (p.ylabel)
+    g.push('<text x="14" y="' + ((yt + yb) / 2).toFixed(1) + '" text-anchor="middle" ' +
+           'transform="rotate(-90 14 ' + ((yt + yb) / 2).toFixed(1) + ')" font-family="' +
+           ART_STYLE.fontFamily + '" font-size="12px" fill="#111">' + _esc(p.ylabel) + '</text>');
+  if (p.xlabel) g.push(_txt(W / 2, H - 12, p.xlabel));
+  var aria = "bar graph: " + cats.map(function(c, k){ return c + " " + vals[k]; }).join(", ");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -1120,6 +1161,7 @@ function renderArt(payload, itemId) {
   if (kind === "sphere")              return _sphere(payload);
   if (kind === "circle_fig")          return _circleFig(payload);
   if (kind === "tape")                return _tapeFig(payload);
+  if (kind === "bar")                 return _barGraph(payload);
   return "";
 }
 
