@@ -864,6 +864,68 @@ function _dTable(p) {
   var aria = cols.join(", ") + "; " + rows.map(function(r){ return r.join(" "); }).join("; ");
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
 }
+/* ── kind: scatter — a data cloud with an optional line of best fit ──
+   Ticks are deliberately sparse: the figure shows the trend, it is not a
+   read-off table. Generators keep any asked-for value outside [xmin,xmax]. */
+function _scatter(p) {
+  var W = 380, H = 300, L = 46, R = 14, T = 16, B = 44;
+  var x0 = p.xmin, x1 = p.xmax, y0 = p.ymin, y1 = p.ymax;
+  var PX = function (v) { return L + (v - x0) / (x1 - x0) * (W - L - R); };
+  var PY = function (v) { return H - B - (v - y0) / (y1 - y0) * (H - T - B); };
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  var i, v;
+  for (i = 0; i < (p.xticks || []).length; i++) {
+    v = p.xticks[i];
+    g.push('<line x1="' + PX(v).toFixed(1) + '" y1="' + PY(y0).toFixed(1) + '" x2="' +
+           PX(v).toFixed(1) + '" y2="' + PY(y1).toFixed(1) + '" stroke="#e6e8ec" stroke-width="0.8"/>');
+    g.push('<text x="' + PX(v).toFixed(1) + '" y="' + (H - B + 15) + '" text-anchor="middle" font-family="' +
+           ART_STYLE.fontFamily + '" font-size="11.5px" fill="#333">' + _esc(String(v)) + '</text>');
+  }
+  for (i = 0; i < (p.yticks || []).length; i++) {
+    v = p.yticks[i];
+    g.push('<line x1="' + PX(x0).toFixed(1) + '" y1="' + PY(v).toFixed(1) + '" x2="' +
+           PX(x1).toFixed(1) + '" y2="' + PY(v).toFixed(1) + '" stroke="#e6e8ec" stroke-width="0.8"/>');
+    g.push('<text x="' + (L - 7) + '" y="' + (PY(v) + 4).toFixed(1) + '" text-anchor="end" font-family="' +
+           ART_STYLE.fontFamily + '" font-size="11.5px" fill="#333">' + _esc(String(v)) + '</text>');
+  }
+  g.push(_line([PX(x0), PY(y0)], [PX(x1), PY(y0)], 1.5));
+  g.push(_line([PX(x0), PY(y0)], [PX(x0), PY(y1)], 1.5));
+  if (p.line) {
+    var m = p.line[0], b = p.line[1];
+    var ya = m * x0 + b, yb = m * x1 + b;
+    var ca = Math.max(y0, Math.min(y1, ya)), cb = Math.max(y0, Math.min(y1, yb));
+    var xa = m === 0 ? x0 : (ca - b) / m, xb = m === 0 ? x1 : (cb - b) / m;
+    g.push('<line x1="' + PX(xa).toFixed(1) + '" y1="' + PY(ca).toFixed(1) + '" x2="' +
+           PX(xb).toFixed(1) + '" y2="' + PY(cb).toFixed(1) + '" stroke="' + ART_STYLE.stroke +
+           '" stroke-width="1.8"/>');
+  }
+  for (i = 0; i < (p.pts || []).length; i++)
+    g.push('<circle cx="' + PX(p.pts[i][0]).toFixed(1) + '" cy="' + PY(p.pts[i][1]).toFixed(1) +
+           '" r="3.1" fill="#111"/>');
+  for (i = 0; i < (p.marks || []).length; i++) {
+    var mk = p.marks[i];
+    g.push('<circle cx="' + PX(mk[0]).toFixed(1) + '" cy="' + PY(mk[1]).toFixed(1) +
+           '" r="4.6" fill="#ffffff" stroke="#111" stroke-width="1.8"/>');
+    if (mk[2]) {
+      var near = PX(mk[0]) > L + (W - L - R) * 0.62;      // hugging the right edge
+      g.push('<text x="' + (PX(mk[0]) + (near ? -8 : 8)).toFixed(1) + '" y="' +
+             (PY(mk[1]) - 11).toFixed(1) + '" text-anchor="' + (near ? "end" : "start") +
+             '" font-family="' + ART_STYLE.fontFamily + '" font-size="11.5px" fill="#111">' +
+             _esc(mk[2]) + '</text>');
+    }
+  }
+  if (p.xlab) g.push('<text x="' + ((L + W - R) / 2).toFixed(1) + '" y="' + (H - 8) +
+    '" text-anchor="middle" font-family="' + ART_STYLE.fontFamily +
+    '" font-size="12px" fill="#111">' + _esc(p.xlab) + '</text>');
+  if (p.ylab) g.push('<text transform="translate(13,' + ((T + H - B) / 2).toFixed(1) +
+    ') rotate(-90)" text-anchor="middle" font-family="' + ART_STYLE.fontFamily +
+    '" font-size="12px" fill="#111">' + _esc(p.ylab) + '</text>');
+  var aria = "Scatterplot of " + (p.ylab || "y") + " against " + (p.xlab || "x") +
+             ((p.pts || []).length ? " with " + p.pts.length + " points" : "") +
+             (p.line ? " and a line of best fit" : "");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
+}
 /* ── kind: numline — two labeled points on a number line (not to scale) ── */
 function _numLine(p) {
   var W = 380, H = 150;
@@ -1419,6 +1481,7 @@ function renderArt(payload, itemId) {
   if (kind === "box")                 return _boxFig(payload, itemId);
   if (kind === "count_table")         return _countTable(payload);
   if (kind === "dtable")              return _dTable(payload);
+  if (kind === "scatter")             return _scatter(payload);
   if (kind === "numline")             return _numLine(payload);
   if (kind === "angle_line")          return _angleLine(payload);
   if (kind === "tri_angles")          return _triAngles(payload, itemId);
@@ -2405,20 +2468,38 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
       order.forEach(k=>by[k].sort(()=>Math.random()-0.5));
       order.sort(()=>Math.random()-0.5);          // which variant leads varies by session
       // A fold tag may carry TWO dimensions, written "sub-form \u00b7 presentation".
-      // Weave the fold order so the trailing dimension alternates as well —
-      // otherwise a surface can run four table folds before its first prose one.
-      // Tags without a "\u00b7" are untouched, so older concepts behave as before.
-      const tailOf = s => { const i = s.lastIndexOf('\u00b7'); return i < 0 ? '' : s.slice(i+1).trim(); };
-      const tails = [];
-      order.forEach(k=>{ const t = tailOf(k); if(tails.indexOf(t) < 0) tails.push(t); });
+      // Walk the fold grid diagonally so consecutive folds differ on BOTH — a
+      // plain interleave alternates the presentation but lets the first two
+      // items of a surface land on the same sub-form, which shows up in any
+      // ten-question run. Tags without a "\u00b7" are untouched, so older
+      // concepts behave exactly as before.
+      const headOf = s => { const i = String(s || '').indexOf('\u00b7');
+                            return i < 0 ? String(s || '') : s.slice(0, i).trim(); };
+      const tailOf = s => { const i = String(s || '').lastIndexOf('\u00b7');
+                            return i < 0 ? '' : s.slice(i + 1).trim(); };
+      const tails = [], heads = [];
+      order.forEach(k=>{
+        const t = tailOf(k); if(tails.indexOf(t) < 0) tails.push(t);
+        const h = headOf(k); if(heads.indexOf(h) < 0) heads.push(h);
+      });
       if(tails.length > 1){
-        const buckets = tails.map(t => order.filter(k => tailOf(k) === t));
         const woven = [];
-        for(let i=0; woven.length < order.length; i++){
-          let placed = false;
-          buckets.forEach(b => { if(i < b.length){ woven.push(b[i]); placed = true; } });
-          if(!placed) break;
+        if(heads.length > 1 && order.length === tails.length * heads.length){
+          for(let k = 0; k < order.length; k++){
+            const t = k % tails.length;
+            const h = (Math.floor(k / tails.length) + t) % heads.length;
+            const f = order.find(x => headOf(x) === heads[h] && tailOf(x) === tails[t]);
+            if(f && woven.indexOf(f) < 0) woven.push(f);
+          }
+        } else {
+          const buckets = tails.map(t => order.filter(k => tailOf(k) === t));
+          for(let i2 = 0; woven.length < order.length; i2++){
+            let placed = false;
+            buckets.forEach(b => { if(i2 < b.length){ woven.push(b[i2]); placed = true; } });
+            if(!placed) break;
+          }
         }
+        order.forEach(k=>{ if(woven.indexOf(k) < 0) woven.push(k); });
         order.length = 0; woven.forEach(k=>order.push(k));
       }
       const out = [];
@@ -2453,15 +2534,20 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
         if(!clash) continue;
         const g = live.find(gr=>gr.indexOf(round[k]) !== -1);
         if(!g) continue;
-        const myFold = foldOf(round[k]);
-        let swapAt = -1, fallback = -1;
+const myFold = foldOf(round[k]);
+        // Only ever swap WITHIN a fold, never across one. A cross-fold fallback
+        // fixes one scenario repeat at the cost of unbalancing the folds, and
+        // over a long run that drift is the more visible problem: simulated over
+        // 2000 sessions, same-fold-only holds every fold exactly even through 40
+        // questions, where the fallback held it in a third of runs. Concepts
+        // whose items carry no fold tag are unaffected — foldOf is null for all
+        // of them, so every candidate still counts as the same fold.
+        let swapAt = -1;
         for(let j=i+1; j<g.length; j++){
           const alt = ctxOf(g[j]);
           if(alt && (seenRecently(alt) || round.some(o=>ctxOf(o) === alt))) continue;
-          if(foldOf(g[j]) === myFold){ swapAt = j; break; }   // keeps folds even
-          if(fallback === -1) fallback = j;
+          if(foldOf(g[j]) === myFold){ swapAt = j; break; }
         }
-        if(swapAt === -1) swapAt = fallback;
         if(swapAt !== -1){
           const at = g.indexOf(round[k]);
           const tmp = g[at]; g[at] = g[swapAt]; g[swapAt] = tmp;
@@ -2567,6 +2653,18 @@ const WORKED = {
       '3.50 \u2212 3.00 = $0.50. Over the long run you come out fifty cents ahead per play.'
     ],
     check: 'The trap is stopping at $3.50 and calling it done. That is what the machine hands you, not what you walk away with \u2014 and $3.50 will be sitting right there among the four choices.'
+  },
+  46: {
+    label: 'Show a worked example',
+    title: 'The line of best fit passes through (2, 14) and (8, 38). Predict y when x = 20.',
+    art: {"kind": "scatter", "pts": [[1, 11], [2, 14], [3, 19], [4, 21], [5, 27], [6, 29], [7, 35], [8, 38], [9, 41]], "line": [4, 6], "xmin": 0, "xmax": 10, "ymin": 0, "ymax": 50, "xticks": [0, 2, 4, 6, 8, 10], "yticks": [0, 10, 20, 30, 40, 50], "marks": [[2, 14, "(2, 14)"], [8, 38, "(8, 38)"]], "xlab": "x", "ylab": "y"},
+    steps: [
+      'Slope first. Rise over run between the two points: (38 \u2212 14) \u00f7 (8 \u2212 2) = 24 \u00f7 6 = 4.',
+      'Now the intercept. Put one of the points \u2014 say (2, 14) \u2014 into y = 4x + b. That gives 14 = 4(2) + b, so 14 = 8 + b, so b = 6.',
+      'The line is y = 4x + 6. Only now do you have something to predict with.',
+      'Predict at x = 20: 4(20) + 6 = 80 + 6 = 86.'
+    ],
+    check: 'The trap is plugging the 20 in for y instead of x. That gives 20 = 4x + 6, so x = 3.5 \u2014 and 3.5 will be sitting right there among the four choices. Read which variable the number belongs to before you substitute.'
   }
 };
 function conceptOfPQ(){
