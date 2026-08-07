@@ -734,10 +734,10 @@ function _grid(p) {
   g.push(_line([X(0), Y(-R)], [X(0), Y(R)], 1.6));
   // small tick labels at ±5, ±10
   [[5,0],[10,0],[-5,0],[-10,0]].forEach(function (t) {
-    g.push('<text x="' + X(t[0]) + '" y="' + (Y(0) + 14) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + t[0] + "</text>");
+    g.push('<text x="' + X(t[0]) + '" y="' + (Y(0) + 14) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + String(t[0]).replace("-", "\u2212") + "</text>");
   });
   [[0,5],[0,10],[0,-5],[0,-10]].forEach(function (t) {
-    g.push('<text x="' + (X(0) - 10) + '" y="' + (Y(t[1]) + 3) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + t[1] + "</text>");
+    g.push('<text x="' + (X(0) - 10) + '" y="' + (Y(t[1]) + 3) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + String(t[1]).replace("-", "\u2212") + "</text>");
   });
   // the line through the two points, extended to the plot edges
   var a = pts[0], b = pts[1];
@@ -746,12 +746,21 @@ function _grid(p) {
   // clip roughly by drawing within the box via clip-path
   g.push('<clipPath id="gclip"><rect x="' + pad + '" y="' + pad + '" width="' + (W - 2 * pad) + '" height="' + (H - 2 * pad) + '"/></clipPath>');
   g.push('<line clip-path="url(#gclip)" x1="' + X(pA[0]) + '" y1="' + Y(pA[1]) + '" x2="' + X(pB[0]) + '" y2="' + Y(pB[1]) + '" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
-  // marked points with coordinate labels
-  pts.forEach(function (pt) {
+  // optional dashed y = x, the mirror an inverse is reflected across
+  if (p.yx) {
+    g.push('<line clip-path="url(#gclip)" x1="' + X(-R) + '" y1="' + Y(-R) + '" x2="' +
+           X(R) + '" y2="' + Y(R) + '" stroke="#888" stroke-width="1.2" stroke-dasharray="5 4"/>');
+    g.push('<text x="' + X(R - 1.4) + '" y="' + (Y(R - 1.4) - 8) + '" text-anchor="end" font-size="12px" font-family="' +
+           ART_STYLE.fontFamily + '" fill="#555">y = x</text>');
+  }
+  // marked points with coordinate labels. p.only names the single point the
+  // question is about, so the other stays unlabelled and merely fixes the line.
+  var shown = p.only === undefined ? pts : [pts[p.only]];
+  shown.forEach(function (pt) {
     g.push('<circle cx="' + X(pt[0]) + '" cy="' + Y(pt[1]) + '" r="4.5" fill="#111"/>');
     var lx = X(pt[0]) + (pt[0] >= 0 ? -8 : 8);
     var anchor = pt[0] >= 0 ? "end" : "start";
-    g.push('<text x="' + lx + '" y="' + (Y(pt[1]) - 9) + '" text-anchor="' + anchor + '" font-size="13px" font-family="' + ART_STYLE.fontFamily + '" fill="#111">(' + pt[0] + ', ' + pt[1] + ')</text>');
+    g.push('<text x="' + lx + '" y="' + (Y(pt[1]) - 9) + '" text-anchor="' + anchor + '" font-size="13px" font-family="' + ART_STYLE.fontFamily + '" fill="#111">(' + String(pt[0]).replace("-", "\u2212") + ', ' + String(pt[1]).replace("-", "\u2212") + ')</text>');
   });
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="coordinate plane with two marked points">' + g.join("") + "</svg>";
 }
@@ -2749,6 +2758,18 @@ const WORKED = {
       'x = \u22122: the first term becomes log\u2082(\u22122). Ask it \u2014 "2 to what power gives \u22122?" There isn\u2019t one. Powers of 2 run 2, 4, 8 one way and \u00bd, \u00bc the other, never negative. So that x cannot be used at all. The answer is x = 4.'
     ],
     check: 'The trap is keeping x = \u22122 because it solved the quadratic honestly. It did \u2014 but it breaks the logarithm it came from. Expect "4 and \u22122" to be one of your four choices. Whenever combining logs produces a quadratic, check both roots in the original equation before you answer.'
+  },
+  51: {
+    label: 'Show a worked example',
+    title: 'Find the inverse of f(x) = 2x\u00b3 \u2212 1.',
+    steps: [
+      'Write it as y = 2x\u00b3 \u2212 1.',
+      'Swap the letters \u2014 that single move is what makes it an inverse: x = 2y\u00b3 \u2212 1.',
+      'Now solve for y again, peeling one layer at a time. Add 1: x + 1 = 2y\u00b3. Divide by 2: y\u00b3 = (x + 1)/2.',
+      'Take the cube root of both sides: f\u207b\u00b9(x) = \u221b((x + 1)/2).',
+      'Check it undid the work. f(2) = 2(8) \u2212 1 = 15, and \u221b(16/2) = \u221b8 = 2. It sent 2 to 15, and the inverse sent 15 back to 2.'
+    ],
+    check: 'The trap is reading the \u22121 in f\u207b\u00b9 as an exponent and answering 1/(2x\u00b3 \u2212 1). That is the reciprocal, not the inverse \u2014 it sends 15 to 1/29, not back to 2. The reciprocal will be one of your four choices. An inverse undoes; a reciprocal divides. They are unrelated.'
   }
 };
 function conceptOfPQ(){
