@@ -3087,6 +3087,22 @@ const WORKED = {
       'Check it the other way: 1 \u00f7 250 = 0.004. Match.'
     ],
     check: 'The trap is reading 0.4% as 0.4 and calling it done. That is 40%, a hundred times too big, and 0.4 will be one of your four choices. The percent sign always costs you two decimal places. And if the choices are fractions but your work left you holding a decimal, your calculator will convert it \u2014 MATH, then Frac, then ENTER.'
+  },
+  59: {
+    label: 'Show a worked example',
+    title: 'One class of 12 students averages 78. Another class of 18 averages 88. What is the combined average?',
+    art: {"kind":"dtable","cols":["Class","Students","Average"],
+          "rows":[["A","12","78"],["B","18","88"],["Both","30","?"]],
+          "caption":"The weights here are head counts, not percents."},
+    steps: [
+      'Do NOT average the two averages. That is only right when the groups are the same size, and 12 is not 18.',
+      'Rebuild the totals instead. Class A: 12 \u00d7 78 = 936 points.',
+      'Class B: 18 \u00d7 88 = 1,584 points.',
+      'All the points: 936 + 1,584 = 2,520. All the students: 12 + 18 = 30.',
+      '2,520 \u00f7 30 = 84.',
+      'Sanity check: 84 sits between 78 and 88, and leans toward 88 because the bigger class scored higher. A weighted average ALWAYS lands between the smallest and largest value, closer to the heavier one.'
+    ],
+    check: 'The trap is (78 + 88) \u00f7 2 = 83, and 83 will be one of your four choices. It is only one point off, which is exactly why it is dangerous \u2014 it looks reasonable. Ask yourself which side carries more weight, then check your answer leans that way.'
   }
 };
 function conceptOfPQ(){
