@@ -1265,7 +1265,9 @@ function _simPair(p) {
   var W = 380, H = 230;
   var g = [];
   g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
-  var yB = 158;
+  // baseline sits high in the card: the stacked base label + caption below the
+  // triangles were crowding the "not to scale" note, while the top was empty
+  var yB = 136;
   function draw(cx, hh, bw, t, isRight) {
     var B = [cx - bw / 2, yB], C = [cx + bw / 2, yB], A = [cx - bw / 2, yB - hh];
     g.push(_line(A, B, 1.8), _line(B, C, 1.8), _line(A, C, 1.8));
@@ -1275,8 +1277,8 @@ function _simPair(p) {
              '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.3"/>');
     }
     if (t.v) g.push(_txtFit(B[0] - _tw(t.v) / 2 - 7, yB - hh / 2, t.v, W));
-    if (t.h) g.push(_txtFit(cx, yB + 17, t.h, W));
-    if (t.name) g.push(_txtFit(cx, yB + 36, t.name, W));
+    if (t.h) g.push(_txtFit(cx, yB + 18, t.h, W));
+    if (t.name) g.push(_txtFit(cx, yB + 37, t.name, W));
   }
   draw(96, 62, 96, p.t1 || {}, p.right !== false);
   draw(272, 104, 132, p.t2 || {}, p.right !== false);
