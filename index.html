@@ -1023,6 +1023,23 @@ function _triAngles(p, seed) {
   if (p.sAB) { var m1 = _sideLabelPos(A, B, I, p.sAB, 14); g.push(_txtFit(m1[0], m1[1], p.sAB, W)); }
   if (p.sBC) { var m2 = _sideLabelPos(B, C, I, p.sBC, 14); g.push(_txtFit(m2[0], m2[1], p.sBC, W)); }
   if (p.sCA) { var m3 = _sideLabelPos(C, A, I, p.sCA, 14); g.push(_txtFit(m3[0], m3[1], p.sCA, W)); }
+  // Optional: extend the base past a vertex and mark the angle OUTSIDE the
+  // triangle. This is the ACT's favourite wrinkle on the trig laws — the
+  // printed angle is supplementary to the one the formula wants.
+  if (p.extAt === "A" || p.extAt === "B") {
+    var V = p.extAt === "B" ? B : A, O = p.extAt === "B" ? A : B;
+    var d = _unit(V[0] - O[0], V[1] - O[1]);
+    var E = [V[0] + d[0] * 62, V[1] + d[1] * 62];
+    g.push('<line x1="' + V[0].toFixed(1) + '" y1="' + V[1].toFixed(1) + '" x2="' +
+           E[0].toFixed(1) + '" y2="' + E[1].toFixed(1) + '" stroke="' + ART_STYLE.stroke +
+           '" stroke-width="1.2" stroke-dasharray="5 4"/>');
+    if (p.extLab) {
+      // sit the label in the wedge between the extension and the far side
+      var toC = _unit(C[0] - V[0], C[1] - V[1]);
+      var bis = _unit(d[0] + toC[0], d[1] + toC[1]);
+      g.push(_txtFit(V[0] + bis[0] * 40, V[1] + bis[1] * 34, p.extLab, W));
+    }
+  }
   g.push(_txt(W / 2, H - 14, ART_STYLE.note));
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="triangle with angles ' +
     _esc([p.A, p.B, p.C].filter(Boolean).join(", ")) + '">' + g.join("") + "</svg>";
@@ -2694,6 +2711,19 @@ const WORKED = {
       'Divide the repeats out: 336 \u00f7 6 = 56 committees.'
     ],
     check: 'The trap is stopping at 336. That is the right answer to a different question \u2014 choosing a president, a vice-president and a treasurer, where AB and BA really are different people in different jobs. A committee has no ranks, so you must divide by 6. Expect 336 to be sitting among the four choices.'
+  },
+  48: {
+    label: 'Show a worked example',
+    title: 'Sides 7 and 9 meet at B on a straight line, with 140\u00b0 marked outside. Find the third side.',
+    art: {"kind": "tri_angles", "vA": "A", "vB": "B", "vC": "C", "sBC": "7", "sAB": "9", "extAt": "B", "extLab": "140\u00b0"},
+    steps: [
+      'Look at the picture before touching a formula. That 140\u00b0 sits between side BC and the continuation of AB \u2014 it is OUTSIDE the triangle, not one of its angles.',
+      'A straight line is 180\u00b0, and the marked angle and the triangle\u2019s own angle at B fill it up together. So the interior angle is 180 \u2212 140 = 40\u00b0. That is what goes in.',
+      'Two sides with the angle between them means law of cosines: b\u00b2 = 7\u00b2 + 9\u00b2 \u2212 2(7)(9)cos 40\u00b0.',
+      '49 + 81 = 130. Then 2 \u00d7 7 \u00d7 9 = 126 and cos 40\u00b0 = 0.7660, so 126 \u00d7 0.7660 = 96.52. That leaves b\u00b2 = 130 \u2212 96.52 = 33.48, so b \u2248 5.8.',
+      'Sanity check: a 40\u00b0 angle is narrow, pinching the two sides together, so the far side should be short. 5.8 is believable.'
+    ],
+    check: 'The trap is feeding 140 straight in. cos 140\u00b0 is negative, so the minus turns into a plus: 130 + 96.52 = 226.5, giving about 15.1 \u2014 longer than the 9-side, which a narrow triangle simply cannot be. Expect 15.1 among the four choices, and let that sanity check catch it.'
   }
 };
 function conceptOfPQ(){
