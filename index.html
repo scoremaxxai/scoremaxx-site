@@ -739,13 +739,23 @@ function _grid(p) {
   [[0,5],[0,10],[0,-5],[0,-10]].forEach(function (t) {
     g.push('<text x="' + (X(0) - 10) + '" y="' + (Y(t[1]) + 3) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + String(t[1]).replace("-", "\u2212") + "</text>");
   });
-  // the line through the two points, extended to the plot edges
-  var a = pts[0], b = pts[1];
-  var dx = b[0] - a[0], dy = b[1] - a[1];
-  var t1 = 100, pA = [a[0] - dx * t1, a[1] - dy * t1], pB = [a[0] + dx * t1, a[1] + dy * t1];
-  // clip roughly by drawing within the box via clip-path
   g.push('<clipPath id="gclip"><rect x="' + pad + '" y="' + pad + '" width="' + (W - 2 * pad) + '" height="' + (H - 2 * pad) + '"/></clipPath>');
-  g.push('<line clip-path="url(#gclip)" x1="' + X(pA[0]) + '" y1="' + Y(pA[1]) + '" x2="' + X(pB[0]) + '" y2="' + Y(pB[1]) + '" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  if (p.segment) {
+    // just the join between the marked points — a distance question is about a
+    // segment, not a line that runs off the page
+    var dseg = [], si;
+    for (si = 0; si < pts.length; si++)
+      dseg.push((si ? "L" : "M") + X(pts[si][0]).toFixed(1) + " " + Y(pts[si][1]).toFixed(1));
+    if (p.closed) dseg.push("Z");
+    g.push('<path d="' + dseg.join(" ") + '" fill="none" stroke="' + ART_STYLE.stroke +
+           '" stroke-width="2" stroke-linejoin="round"/>');
+  } else {
+    // the line through the two points, extended to the plot edges
+    var a = pts[0], b = pts[1];
+    var dx = b[0] - a[0], dy = b[1] - a[1];
+    var t1 = 100, pA = [a[0] - dx * t1, a[1] - dy * t1], pB = [a[0] + dx * t1, a[1] + dy * t1];
+    g.push('<line clip-path="url(#gclip)" x1="' + X(pA[0]) + '" y1="' + Y(pA[1]) + '" x2="' + X(pB[0]) + '" y2="' + Y(pB[1]) + '" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  }
   // optional dashed y = x, the mirror an inverse is reflected across
   if (p.yx) {
     g.push('<line clip-path="url(#gclip)" x1="' + X(-R) + '" y1="' + Y(-R) + '" x2="' +
@@ -2843,6 +2853,19 @@ const WORKED = {
       'The period is handed to you: the pattern repeats every 4 units.'
     ],
     check: 'The trap is answering 7 because 7 is the highest point on the picture. That is the distance from the x-axis, but the wave does not live on the x-axis \u2014 it lives on y = 3. Expect 7 among the four choices. Amplitude is always measured from the middle, never from zero.'
+  },
+  54: {
+    label: 'Show a worked example',
+    title: 'Find the distance between (\u22123, 5) and (2, \u22127).',
+    art: {"kind":"grid","points":[[-3,5],[2,-7]],"segment":true},
+    steps: [
+      'This is the Pythagorean theorem wearing a costume. The across and the up are the legs; the distance is the hypotenuse.',
+      'The x\u2019s: 2 \u2212 (\u22123). Minus a negative is plus, so that leg is 5.',
+      'The y\u2019s: \u22127 \u2212 5 = \u221212. Do not panic about the minus \u2014 squaring kills the sign.',
+      '5\u00b2 = 25 and (\u221212)\u00b2 = 144. Add them: 25 + 144 = 169.',
+      'Take the root: \u221a169 = 13.'
+    ],
+    check: 'The trap is stopping at 169 and never taking the root. That is the SQUARED distance, not the distance, and 169 will be one of your four choices. The last move is always \u221a.'
   }
 };
 function conceptOfPQ(){
