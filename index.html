@@ -2455,6 +2455,17 @@ const WORKED = {
       'That leaves 6\u221A2. Nothing is left under the radical that has a perfect-square factor, so it is fully simplified.'
     ],
     check: 'Check it: 6 \u00D7 1.414 = 8.485, and \u221A72 = 8.485. Same number, cleaner form.'
+  },
+  43: {
+    label: 'Show a worked example',
+    title: 'Multiplying (2 + 3i)(4 \u2212 i)',
+    steps: [
+      'Multiply it out like two binomials \u2014 all four pairs. 2 \u00D7 4 = 8. 2 \u00D7 (\u2212i) = \u22122i. 3i \u00D7 4 = 12i. 3i \u00D7 (\u2212i) = \u22123i\u00B2.',
+      'Combine the i terms: \u22122i + 12i = 10i.',
+      'Now the key move. i\u00B2 = \u22121, so \u22123i\u00B2 = \u22123(\u22121) = +3. Two negatives make a positive there.',
+      'Add that to the 8: 8 + 3 = 11. The answer is 11 + 10i.'
+    ],
+    check: 'The common slip is leaving \u22123i\u00B2 as \u22123, giving 8 \u2212 3 = 5 and the answer 5 + 10i. Whenever an i\u00B2 appears, swap it for \u22121 before you add.'
   }
 };
 function conceptOfPQ(){
