@@ -1351,6 +1351,33 @@ function _factorTree(p) {
     p.n + '">' + g.join("") + "</svg>";
 }
 
+/* ── kind: venn — two overlapping sets with counts in each region ──
+   {a, b} are the set names; {onlyA, both, onlyB, neither} the region counts
+   (any may be "?"); {total} is drawn as a caption. Not to scale. */
+function _venn(p) {
+  var W = 380, H = 250;
+  // circles sit low enough that the set names clear their tops
+  var cy = 134, r = 66, cxA = 150, cxB = 230;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  // the universe box, so "neither" has somewhere to live
+  g.push('<rect x="18" y="34" width="' + (W - 36) + '" height="' + (H - 74) +
+         '" fill="none" stroke="#c8ccd4" stroke-width="1.2" rx="6"/>');
+  g.push('<circle cx="' + cxA + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' +
+         ART_STYLE.stroke + '" stroke-width="1.8"/>');
+  g.push('<circle cx="' + cxB + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' +
+         ART_STYLE.stroke + '" stroke-width="1.8"/>');
+  if (p.a) g.push(_txtFit(cxA - 40, 56, p.a, W));
+  if (p.b) g.push(_txtFit(cxB + 40, 56, p.b, W));
+  if (p.onlyA != null) g.push(_txt(cxA - 36, cy + 5, String(p.onlyA)));
+  if (p.both  != null) g.push(_txt((cxA + cxB) / 2, cy + 5, String(p.both)));
+  if (p.onlyB != null) g.push(_txt(cxB + 36, cy + 5, String(p.onlyB)));
+  if (p.neither != null) g.push(_txt(W - 42, H - 52, String(p.neither)));
+  if (p.total != null) g.push(_txt(W / 2, H - 14, "Total: " + p.total));
+  var aria = "Venn diagram of " + (p.a || "set A") + " and " + (p.b || "set B");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + aria + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -1378,6 +1405,7 @@ function renderArt(payload, itemId) {
   if (kind === "sim_pair")            return _simPair(payload);
   if (kind === "tri_parallel")        return _triParallel(payload);
   if (kind === "factor_tree")         return _factorTree(payload);
+  if (kind === "venn")                return _venn(payload);
   return "";
 }
 
@@ -2466,6 +2494,18 @@ const WORKED = {
       'Add that to the 8: 8 + 3 = 11. The answer is 11 + 10i.'
     ],
     check: 'The common slip is leaving \u22123i\u00B2 as \u22123, giving 8 \u2212 3 = 5 and the answer 5 + 10i. Whenever an i\u00B2 appears, swap it for \u22121 before you add.'
+  },
+  44: {
+    label: 'Show a worked example',
+    title: '40 students, 22 take Spanish, 19 take art, 5 take neither \u2014 how many take both?',
+    art: {kind:'venn', a:'Spanish', b:'Art', onlyA:16, both:6, onlyB:13, neither:5, total:40},
+    steps: [
+      'First find how many take AT LEAST ONE. 5 students take neither, so 40 \u2212 5 = 35 are inside the two circles.',
+      'Inclusion-exclusion says: at least one = Spanish + art \u2212 both. So 35 = 22 + 19 \u2212 both.',
+      '22 + 19 = 41, so 41 \u2212 both = 35, which gives both = 6.',
+      'Now fill the diagram. Spanish only = 22 \u2212 6 = 16, both = 6, art only = 19 \u2212 6 = 13, neither = 5. Those add to 40, so the split checks out.'
+    ],
+    check: 'The trap: using 40 instead of 35. That gives 22 + 19 \u2212 40 = 1, which is wrong. The formula works on the number who do at least one \u2014 the students outside both circles are never part of it.'
   }
 };
 function conceptOfPQ(){
