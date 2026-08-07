@@ -2770,6 +2770,19 @@ const WORKED = {
       'Check it undid the work. f(2) = 2(8) \u2212 1 = 15, and \u221b(16/2) = \u221b8 = 2. It sent 2 to 15, and the inverse sent 15 back to 2.'
     ],
     check: 'The trap is reading the \u22121 in f\u207b\u00b9 as an exponent and answering 1/(2x\u00b3 \u2212 1). That is the reciprocal, not the inverse \u2014 it sends 15 to 1/29, not back to 2. The reciprocal will be one of your four choices. An inverse undoes; a reciprocal divides. They are unrelated.'
+  },
+  52: {
+    label: 'Show a worked example',
+    title: 'x: 0, 2, 5, 6 and y: 3, 11, 23, 27. Is this linear?',
+    art: {"kind":"dtable","cols":["x","y"],"rows":[["0","3"],["2","11"],["5","23"],["6","27"]],"caption":"The x-values jump unevenly \u2014 0, 2, 5, 6"},
+    steps: [
+      'The x-values do NOT go up in equal steps, so you cannot just look down the y-column. You have to divide each change in y by the matching change in x.',
+      '(11 \u2212 3) \u00f7 (2 \u2212 0) = 8 \u00f7 2 = 4.',
+      '(23 \u2212 11) \u00f7 (5 \u2212 2) = 12 \u00f7 3 = 4.',
+      '(27 \u2212 23) \u00f7 (6 \u2212 5) = 4 \u00f7 1 = 4.',
+      'Every rate is 4, so yes \u2014 it is linear. At x = 0 the value is 3, so the rule is y = 4x + 3.'
+    ],
+    check: 'The trap is looking only at the y-column. Those jumps are 8, 12 and 4 \u2014 all different \u2014 and it is tempting to call it not linear on the spot. But the x-column jumped unevenly too, and once you divide, every rate is the same 4. "Not linear" will be one of your four choices. What has to stay constant is the RATE, not the raw change in y.'
   }
 };
 function conceptOfPQ(){
