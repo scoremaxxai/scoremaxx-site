@@ -1008,6 +1008,82 @@ function _wave(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
     _esc("a " + (p.wave === "cos" ? "cosine" : "sine") + " curve") + '">' + g.join("") + "</svg>";
 }
+/* ── kind: composite — a polygon chopped from familiar pieces ─────
+   No decomposition lines are drawn. Choosing where to cut the shape is the
+   skill; drawing the cut would do the thinking for the student. */
+function _composite(p) {
+  var W = 380, H = 300, pad = 46;
+  var poly = p.poly, i;
+  var xs = poly.map(function (v) { return v[0]; }), ys = poly.map(function (v) { return v[1]; });
+  // an arc that bulges outward reaches past the polygon's corners, so its apex
+  // has to be inside the bounds or the figure runs off the card
+  if (p.arc && p.arc.dir === "out") {
+    var ea = poly[p.arc.edge], eb = poly[(p.arc.edge + 1) % poly.length];
+    var ex = (ea[0] + eb[0]) / 2, ey = (ea[1] + eb[1]) / 2;
+    var elen = Math.hypot(eb[0] - ea[0], eb[1] - ea[1]);
+    var en = _unit(-(eb[1] - ea[1]), eb[0] - ea[0]);
+    var mid = [0, 0], q;
+    for (q = 0; q < poly.length; q++) { mid[0] += poly[q][0]; mid[1] += poly[q][1]; }
+    mid[0] /= poly.length; mid[1] /= poly.length;
+    if (en[0] * (ex - mid[0]) + en[1] * (ey - mid[1]) < 0) en = [-en[0], -en[1]];
+    xs = xs.concat([ex + en[0] * elen / 2]);
+    ys = ys.concat([ey + en[1] * elen / 2]);
+  }
+  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+  var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  var sc = Math.min((W - 2 * pad) / Math.max(x1 - x0, 1), (H - 2 * pad) / Math.max(y1 - y0, 1));
+  var ox = (W - (x1 - x0) * sc) / 2, oy = (H - (y1 - y0) * sc) / 2;
+  var PX = function (v) { return ox + (v - x0) * sc; };
+  var PY = function (v) { return H - oy - (v - y0) * sc; };
+  var cx = 0, cy = 0;
+  for (i = 0; i < poly.length; i++) { cx += PX(poly[i][0]); cy += PY(poly[i][1]); }
+  cx /= poly.length; cy /= poly.length;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  var d = ["M" + PX(poly[0][0]).toFixed(1) + " " + PY(poly[0][1]).toFixed(1)];
+  for (i = 0; i < poly.length; i++) {
+    var a = poly[i], b = poly[(i + 1) % poly.length];
+    var ax = PX(a[0]), ay = PY(a[1]), bx = PX(b[0]), by = PY(b[1]);
+    if (p.arc && p.arc.edge === i) {
+      var r = Math.hypot(bx - ax, by - ay) / 2;
+      // sweep 1 bulges one way round the chord, 0 the other
+      d.push("A" + r.toFixed(1) + " " + r.toFixed(1) + " 0 0 " +
+             (p.arc.dir === "in" ? 1 : 0) + " " + bx.toFixed(1) + " " + by.toFixed(1));
+    } else {
+      d.push("L" + bx.toFixed(1) + " " + by.toFixed(1));
+    }
+  }
+  d.push("Z");
+  g.push('<path d="' + d.join(" ") + '" fill="#f4f5f7" stroke="' + ART_STYLE.stroke +
+         '" stroke-width="1.8" stroke-linejoin="round"/>');
+  // Edge labels sit on the edge's OWN outward normal, not on the direction
+  // from the centre. On a concave shape like an L those disagree, and the
+  // centre-based version drops the inner labels straight onto the lines.
+  function inside(px, py) {
+    var hit = false;
+    for (var a = 0, b = poly.length - 1; a < poly.length; b = a++) {
+      var xa = PX(poly[a][0]), ya = PY(poly[a][1]);
+      var xb = PX(poly[b][0]), yb = PY(poly[b][1]);
+      if (((ya > py) !== (yb > py)) &&
+          (px < (xb - xa) * (py - ya) / (yb - ya) + xa)) hit = !hit;
+    }
+    return hit;
+  }
+  var lab = p.labels || {};
+  for (var k in lab) {
+    if (!Object.prototype.hasOwnProperty.call(lab, k)) continue;
+    i = parseInt(k, 10);
+    var u = poly[i], v = poly[(i + 1) % poly.length];
+    var ux = PX(u[0]), uy = PY(u[1]), vx = PX(v[0]), vy = PY(v[1]);
+    var mx = (ux + vx) / 2, my = (uy + vy) / 2;
+    var n = _unit(-(vy - uy), vx - ux);
+    if (inside(mx + n[0] * 6, my + n[1] * 6)) n = [-n[0], -n[1]];
+    g.push(_txtFit(mx + n[0] * 22, my + n[1] * 18, lab[k], W));
+  }
+  g.push(_txt(W / 2, H - 12, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
+    _esc(p.aria || "a composite figure") + '">' + g.join("") + "</svg>";
+}
 /* ── kind: numline — two labeled points on a number line (not to scale) ── */
 function _numLine(p) {
   var W = 380, H = 150;
@@ -1582,6 +1658,7 @@ function renderArt(payload, itemId) {
   if (kind === "dtable")              return _dTable(payload);
   if (kind === "scatter")             return _scatter(payload);
   if (kind === "wave")                return _wave(payload);
+  if (kind === "composite")           return _composite(payload);
   if (kind === "numline")             return _numLine(payload);
   if (kind === "angle_line")          return _angleLine(payload);
   if (kind === "tri_angles")          return _triAngles(payload, itemId);
@@ -2866,6 +2943,22 @@ const WORKED = {
       'Take the root: \u221a169 = 13.'
     ],
     check: 'The trap is stopping at 169 and never taking the root. That is the SQUARED distance, not the distance, and 169 will be one of your four choices. The last move is always \u221a.'
+  },
+  55: {
+    label: 'Show a worked example',
+    title: 'A 16 by 10 ft rectangle with a semicircle of diameter 10 ft cut out of one end.',
+    art: {"kind":"composite","poly":[[0,0],[16,0],[16,10],[0,10]],
+          "arc":{"edge":1,"dir":"in"},
+          "labels":{"0":"16 ft","3":"10 ft"},
+          "aria":"a rectangle with a semicircle removed from one end"},
+    steps: [
+      'A composite figure is never a formula you have not met. It is two shapes you have met, stuck together \u2014 so the only decision is where to cut it.',
+      'Cut here: a whole 16 by 10 rectangle, minus a semicircle. Do the rectangle first: 16 \u00d7 10 = 160 square feet.',
+      'The semicircle sits on a side that is 10 ft long, so 10 is the DIAMETER. The radius is half of that: r = 5.',
+      'A whole circle of radius 5 has area \u03c0r\u00b2 = \u03c0 \u00b7 25 \u2248 78.54. This is half a circle, so halve it: 39.27.',
+      '160 \u2212 39.27 = 120.73, which is 120.7 square feet to the nearest tenth.'
+    ],
+    check: 'Two traps live in this one figure. The first is using 10 as the radius instead of the diameter. The second is subtracting a whole circle and never halving it \u2014 that gives 160 \u2212 78.54 = 81.5, and 81.5 will be sitting there in your choices. Removed a half? Halve the area.'
   }
 };
 function conceptOfPQ(){
