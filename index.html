@@ -2404,6 +2404,23 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
       if(order.length < 2) return g.sort(()=>Math.random()-0.5);
       order.forEach(k=>by[k].sort(()=>Math.random()-0.5));
       order.sort(()=>Math.random()-0.5);          // which variant leads varies by session
+      // A fold tag may carry TWO dimensions, written "sub-form \u00b7 presentation".
+      // Weave the fold order so the trailing dimension alternates as well —
+      // otherwise a surface can run four table folds before its first prose one.
+      // Tags without a "\u00b7" are untouched, so older concepts behave as before.
+      const tailOf = s => { const i = s.lastIndexOf('\u00b7'); return i < 0 ? '' : s.slice(i+1).trim(); };
+      const tails = [];
+      order.forEach(k=>{ const t = tailOf(k); if(tails.indexOf(t) < 0) tails.push(t); });
+      if(tails.length > 1){
+        const buckets = tails.map(t => order.filter(k => tailOf(k) === t));
+        const woven = [];
+        for(let i=0; woven.length < order.length; i++){
+          let placed = false;
+          buckets.forEach(b => { if(i < b.length){ woven.push(b[i]); placed = true; } });
+          if(!placed) break;
+        }
+        order.length = 0; woven.forEach(k=>order.push(k));
+      }
       const out = [];
       for(let i=0; out.length < g.length; i++){
         let placed = false;
