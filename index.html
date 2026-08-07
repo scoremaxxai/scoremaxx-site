@@ -850,10 +850,20 @@ function _dTable(p) {
       '" text-anchor="middle" dominant-baseline="central" font-family="' + ART_STYLE.fontFamily +
       '" font-size="13.5px" fill="#111">' + _esc(cols[c]) + '</text>');
   }
+  // a cell whose text is wider than its column shrinks to fit rather than
+  // spilling over the rule beside it
+  var cell = function (cx, cy, s) {
+    var t = String(s), size = 13.5, avail = cw - 10;
+    if (_tw(t) > avail) size = Math.max(8.5, 13.5 * avail / _tw(t));
+    return '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) +
+      '" text-anchor="middle" dominant-baseline="central" font-family="' +
+      ART_STYLE.fontFamily + '" font-size="' + size.toFixed(1) + 'px" fill="#111">' +
+      _esc(t) + "</text>";
+  };
   for (var r = 0; r < n; r++) {
     var y = top + rowH * (r + 1) + rowH / 2;
     for (var k = 0; k < m; k++)
-      g.push(_txt(x0 + cw * (k + 0.5), y, String(rows[r][k])));
+      g.push(cell(x0 + cw * (k + 0.5), y, rows[r][k]));
   }
   for (var i = 0; i <= n + 1; i++)
     g.push(_line([x0, top + rowH * i], [x1, top + rowH * i], i <= 1 || i === n + 1 ? 1.5 : 1));
@@ -2665,6 +2675,18 @@ const WORKED = {
       'Predict at x = 20: 4(20) + 6 = 80 + 6 = 86.'
     ],
     check: 'The trap is plugging the 20 in for y instead of x. That gives 20 = 4x + 6, so x = 3.5 \u2014 and 3.5 will be sitting right there among the four choices. Read which variable the number belongs to before you substitute.'
+  },
+  47: {
+    label: 'Show a worked example',
+    title: 'A club has 8 members. How many different 3-person committees can be formed?',
+    art: {"kind": "dtable", "cols": ["Picked in order", "The same two people"], "rows": [["AB", "BA"], ["AC", "CA"], ["AD", "DA"], ["BC", "CB"], ["BD", "DB"], ["CD", "DC"]], "caption": "Four people, pick two: 12 orderings, only 6 different pairs"},
+    steps: [
+      'Shrink it first and look. Four people \u2014 A, B, C, D \u2014 pick 2. Picking in order gives 4 \u00d7 3 = 12. But read the table: AB and BA are the same two people. Every pair got written down twice, because 2 people order 2 ways. The real count is 12 \u00f7 2 = 6.',
+      'Now the club, same idea. Pick 3 in order: 8 \u00d7 7 \u00d7 6 = 336.',
+      'Each committee got written down once for every arrangement of its 3 members, and 3 people arrange 3 \u00d7 2 \u00d7 1 = 6 ways.',
+      'Divide the repeats out: 336 \u00f7 6 = 56 committees.'
+    ],
+    check: 'The trap is stopping at 336. That is the right answer to a different question \u2014 choosing a president, a vice-president and a treasurer, where AB and BA really are different people in different jobs. A committee has no ranks, so you must divide by 6. Expect 336 to be sitting among the four choices.'
   }
 };
 function conceptOfPQ(){
