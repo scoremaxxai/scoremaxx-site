@@ -835,6 +835,35 @@ function _countTable(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
 }
 
+/* ── kind: dtable — a small data table, 2 or 3 columns, optional caption ── */
+function _dTable(p) {
+  var cols = p.cols, rows = p.rows, n = rows.length, m = cols.length;
+  var W = 380, rowH = 30, top = 16;
+  var capH = p.caption ? 26 : 0;
+  var H = top + rowH * (n + 1) + 20 + capH;
+  var x0 = 26, x1 = W - 26, cw = (x1 - x0) / m;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  var hy = top + rowH / 2;
+  for (var c = 0; c < m; c++) {
+    g.push('<text x="' + (x0 + cw * (c + 0.5)).toFixed(1) + '" y="' + hy.toFixed(1) +
+      '" text-anchor="middle" dominant-baseline="central" font-family="' + ART_STYLE.fontFamily +
+      '" font-size="13.5px" fill="#111">' + _esc(cols[c]) + '</text>');
+  }
+  for (var r = 0; r < n; r++) {
+    var y = top + rowH * (r + 1) + rowH / 2;
+    for (var k = 0; k < m; k++)
+      g.push(_txt(x0 + cw * (k + 0.5), y, String(rows[r][k])));
+  }
+  for (var i = 0; i <= n + 1; i++)
+    g.push(_line([x0, top + rowH * i], [x1, top + rowH * i], i <= 1 || i === n + 1 ? 1.5 : 1));
+  for (var j = 0; j <= m; j++)
+    g.push(_line([x0 + cw * j, top], [x0 + cw * j, top + rowH * (n + 1)], 1.5));
+  if (p.caption)
+    g.push(_txt(W / 2, top + rowH * (n + 1) + 18, p.caption));
+  var aria = cols.join(", ") + "; " + rows.map(function(r){ return r.join(" "); }).join("; ");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
+}
 /* ── kind: numline — two labeled points on a number line (not to scale) ── */
 function _numLine(p) {
   var W = 380, H = 150;
@@ -1389,6 +1418,7 @@ function renderArt(payload, itemId) {
   if (kind === "rect")                return _rectFig(payload, itemId);
   if (kind === "box")                 return _boxFig(payload, itemId);
   if (kind === "count_table")         return _countTable(payload);
+  if (kind === "dtable")              return _dTable(payload);
   if (kind === "numline")             return _numLine(payload);
   if (kind === "angle_line")          return _angleLine(payload);
   if (kind === "tri_angles")          return _triAngles(payload, itemId);
@@ -2506,6 +2536,20 @@ const WORKED = {
       'Now fill the diagram. Spanish only = 22 \u2212 6 = 16, both = 6, art only = 19 \u2212 6 = 13, neither = 5. Those add to 40, so the split checks out.'
     ],
     check: 'The trap: using 40 instead of 35. That gives 22 + 19 \u2212 40 = 1, which is wrong. The formula works on the number who do at least one \u2014 the students outside both circles are never part of it.'
+  },
+  45: {
+    label: 'Show a worked example',
+    title: 'A game costs $3.00 to play. What is the expected gain?',
+    art: {kind:'dtable', cols:['Payout','Probability'],
+          rows:[['$20.00','1/10'],['$5.00','3/10'],['$0.00','6/10']],
+          caption:'Cost to play: $3.00'},
+    steps: [
+      'Do the payout first, one line per outcome. Multiply each payout by its probability: 20 \u00D7 1/10 = 2. 5 \u00D7 3/10 = 1.50. 0 \u00D7 6/10 = 0.',
+      'Add the pieces: 2 + 1.50 + 0 = $3.50. That is the average payout per play \u2014 note you can never actually win $3.50 on a single play, the game only pays 20, 5 or 0.',
+      'Now read the question again. It asked for the GAIN, and $3.00 leaves your pocket every play, win or lose.',
+      '3.50 \u2212 3.00 = $0.50. Over the long run you come out fifty cents ahead per play.'
+    ],
+    check: 'The trap is stopping at $3.50 and calling it done. That is what the machine hands you, not what you walk away with \u2014 and $3.50 will be sitting right there among the four choices.'
   }
 };
 function conceptOfPQ(){
