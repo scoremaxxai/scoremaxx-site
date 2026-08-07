@@ -1324,6 +1324,33 @@ function _triParallel(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="triangle ABC with DE parallel to BC">' + g.join("") + "</svg>";
 }
 
+/* ── kind: factor_tree — a worked factor tree, used only by the worked-example
+   panel (never by a live item, whose radicand is reserved out of the bank). ── */
+function _factorTree(p) {
+  var W = 380, H = 250;
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  var root = [190, 34], L = [110, 104], R = [270, 104];
+  var LL = [64, 174], LR = [156, 174];
+  g.push(_line(root, L, 1.4), _line(root, R, 1.4), _line(L, LL, 1.4), _line(L, LR, 1.4));
+  function node(pt, t, bold) {
+    g.push('<circle cx="' + pt[0] + '" cy="' + pt[1] + '" r="19" fill="#ffffff" stroke="' +
+           ART_STYLE.stroke + '" stroke-width="' + (bold ? 2.2 : 1.4) + '"/>');
+    g.push('<text x="' + pt[0] + '" y="' + (pt[1] + 5) + '" text-anchor="middle" font-family="' +
+           ART_STYLE.fontFamily + '" font-size="14px" fill="#111"' +
+           (bold ? ' font-weight="600"' : '') + '>' + _esc(t) + '</text>');
+  }
+  node(root, String(p.n), true);
+  node(L, String(p.a), true);
+  node(R, String(p.b));
+  node(LL, String(p.a1));
+  node(LR, String(p.a2));
+  g.push(_txt(L[0], 210, "perfect square"));
+  g.push(_txt(R[0], 140, "what is left"));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="factor tree for ' +
+    p.n + '">' + g.join("") + "</svg>";
+}
+
 function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
@@ -1350,6 +1377,7 @@ function renderArt(payload, itemId) {
   if (kind === "ineq_line")           return _ineqLine(payload);
   if (kind === "sim_pair")            return _simPair(payload);
   if (kind === "tri_parallel")        return _triParallel(payload);
+  if (kind === "factor_tree")         return _factorTree(payload);
   return "";
 }
 
@@ -2409,6 +2437,58 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
   advancePQ();
   return true;
 }
+
+// ---------- WORKED EXAMPLES ----------
+// An optional teaching aid a student can open mid-question. The example ALWAYS
+// uses different numbers from any live item — for concept 42 the radicand 72 is
+// reserved out of the bank — so opening it teaches the method without handing
+// over the answer to the question on screen.
+const WORKED = {
+  42: {
+    label: 'Show a worked example',
+    title: 'Simplifying \u221A72',
+    art: {kind:'factor_tree', n:72, a:36, b:2, a1:6, a2:6},
+    steps: [
+      'Look for the largest perfect square that divides 72. The perfect squares are 4, 9, 16, 25, 36, 49, 64, 81, 100 \u2014 and 36 goes in exactly, because 36 \u00D7 2 = 72.',
+      'Split the radical across that factor: \u221A72 = \u221A36 \u00B7 \u221A2.',
+      '\u221A36 = 6, so the 6 comes out and the 2 stays under the radical.',
+      'That leaves 6\u221A2. Nothing is left under the radical that has a perfect-square factor, so it is fully simplified.'
+    ],
+    check: 'Check it: 6 \u00D7 1.414 = 8.485, and \u221A72 = 8.485. Same number, cleaner form.'
+  }
+};
+function conceptOfPQ(){
+  const m = String((PR && PR.skill) || '').match(/^concept:(\d+)$/);
+  return m ? parseInt(m[1], 10) : null;
+}
+function toggleWorked(){
+  const el = document.getElementById('worked-body');
+  const btn = document.getElementById('worked-btn');
+  if(!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  const w = WORKED[conceptOfPQ()];
+  if(btn && w) btn.textContent = open ? w.label : 'Hide the worked example';
+}
+function workedHtml(){
+  const w = WORKED[conceptOfPQ()];
+  if(!w) return '';
+  let b = '<div id="worked-body" style="display:none;margin-top:10px;background:var(--panel2);'
+    + 'border:1px solid var(--line);border-radius:12px;padding:14px 16px">'
+    + '<div style="font-weight:600;margin-bottom:10px">'+esc(w.title)+'</div>';
+  if(w.art && typeof renderArt==='function'){
+    const svg = renderArt(w.art, 'worked');
+    if(svg) b += '<div style="max-width:420px;margin:0 auto 12px">'+svg+'</div>';
+  }
+  b += '<ol style="margin:0 0 0 18px;padding:0;font-size:13.5px;line-height:1.7;color:var(--soft)">'
+    + w.steps.map(s=>'<li style="margin-bottom:6px">'+esc(s)+'</li>').join('')
+    + '</ol>';
+  if(w.check) b += '<p class="dim" style="margin:10px 0 0;font-size:12.5px">'+esc(w.check)+'</p>';
+  b += '</div>';
+  return '<div style="margin-bottom:14px">'
+    + '<button id="worked-btn" class="btn2" style="padding:7px 13px;font-size:12.5px" '
+    + 'onclick="toggleWorked()">'+esc(w.label)+'</button>' + b + '</div>';
+}
 // math_items row -> the shape renderPQ already understands
 function adaptMathItem(r, skill){
   const q = { id:r.item_id, skill, section:'math', stem:r.stem,
@@ -2518,6 +2598,7 @@ function renderPQ(){
   if(q.figure_svg && q.figure_svg.indexOf('<svg')===0) h += '<div style="margin-bottom:14px;text-align:center">'+q.figure_svg+'</div>';
   if(!q.figure_svg && q.art_payload && typeof renderArt==='function'){ const fsvg = renderArt(q.art_payload, q.id); if(fsvg) h += '<div style="margin-bottom:14px;max-width:560px;margin-left:auto;margin-right:auto">'+fsvg+'</div>'; }
   h += '<div style="font-size:15px;line-height:1.6;margin-bottom:14px">'+esc(q.stem)+'</div>';
+  h += workedHtml();
   const locked = (mode==='confidence' && PR.pending!==null);
   h += LETTERS.map(L=>{
     let extra='', click='onclick="pickP(\''+L+'\')"';
