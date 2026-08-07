@@ -3071,6 +3071,22 @@ const WORKED = {
       'The product is [7 12 ; 12 15].'
     ],
     check: 'The trap is doing the ADDITION motion: 2 \u00d7 4 = 8, \u22121 \u00d7 5 = \u22125, and so on, giving [8 \u22125 ; 3 0]. Spot times spot is not matrix multiplication, and [8 \u22125 ; 3 0] will be one of your four choices. Rows meet columns. And because rows come from the FIRST matrix and columns from the second, BA is a different grid from AB.'
+  },
+  58: {
+    label: 'Show a worked example',
+    title: 'Write 0.4% as a decimal and as a fraction in lowest terms.',
+    art: {"kind":"dtable","cols":["Percent","Decimal","Fraction"],
+          "rows":[["40%","0.4","2/5"],["4%","0.04","1/25"],["0.4%","0.004","1/250"]],
+          "caption":"Same digits. Each row is ten times smaller than the one above."},
+    steps: [
+      'A percent with a decimal already in it trips people badly, so slow down and do the two jobs separately.',
+      'Percent to decimal means moving the point two places LEFT. Starting at 0.4, one place gives 0.04, two places gives 0.004.',
+      'Now the fraction. 0.004 is four thousandths, so write it as 4/1000.',
+      'Reduce: divide top and bottom by 4. 4 \u00f7 4 = 1 and 1000 \u00f7 4 = 250.',
+      'So 0.4% = 0.004 = 1/250.',
+      'Check it the other way: 1 \u00f7 250 = 0.004. Match.'
+    ],
+    check: 'The trap is reading 0.4% as 0.4 and calling it done. That is 40%, a hundred times too big, and 0.4 will be one of your four choices. The percent sign always costs you two decimal places. And if the choices are fractions but your work left you holding a decimal, your calculator will convert it \u2014 MATH, then Frac, then ENTER.'
   }
 };
 function conceptOfPQ(){
