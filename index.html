@@ -2724,6 +2724,18 @@ const WORKED = {
       'Sanity check: a 40\u00b0 angle is narrow, pinching the two sides together, so the far side should be short. 5.8 is believable.'
     ],
     check: 'The trap is feeding 140 straight in. cos 140\u00b0 is negative, so the minus turns into a plus: 130 + 96.52 = 226.5, giving about 15.1 \u2014 longer than the 9-side, which a narrow triangle simply cannot be. Expect 15.1 among the four choices, and let that sanity check catch it.'
+  },
+  49: {
+    label: 'Show a worked example',
+    title: 'Solve 9^x = 27^(x \u2212 1) for x.',
+    steps: [
+      'Neither side is a power of the other, but both are powers of 3: 9 = 3\u00b2 and 27 = 3\u00b3.',
+      'Left side: (3\u00b2)\u02e3 = 3^(2x). Right side: (3\u00b3)^(x \u2212 1) = 3^(3(x \u2212 1)) = 3^(3x \u2212 3). Distribute the 3 across BOTH terms, not just the x.',
+      'Same base, so the exponents must be equal: 2x = 3x \u2212 3.',
+      'Subtract 3x from both sides: \u2212x = \u22123, so x = 3.',
+      'Check: 9\u00b3 = 729 and 27\u00b2 = 729. Match.'
+    ],
+    check: 'The trap is multiplying only the x and leaving the \u22121 alone \u2014 writing 3x \u2212 1 instead of 3x \u2212 3. That gives 2x = 3x \u2212 1, so x = 1, and 1 will be sitting among the four choices. When you rewrite a base, the new exponent multiplies everything inside the bracket.'
   }
 };
 function conceptOfPQ(){
