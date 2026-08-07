@@ -869,8 +869,15 @@ function _dTable(p) {
     g.push(_line([x0, top + rowH * i], [x1, top + rowH * i], i <= 1 || i === n + 1 ? 1.5 : 1));
   for (var j = 0; j <= m; j++)
     g.push(_line([x0 + cw * j, top], [x0 + cw * j, top + rowH * (n + 1)], 1.5));
-  if (p.caption)
-    g.push(_txt(W / 2, top + rowH * (n + 1) + 18, p.caption));
+  if (p.caption) {
+    // the caption spans the whole figure, so it gets the same shrink-to-fit
+    // treatment as a cell — otherwise a long one clips at both ends
+    var ct = String(p.caption), cs = 13.5, cav = W - 24;
+    if (_tw(ct) > cav) cs = Math.max(9, 13.5 * cav / _tw(ct));
+    g.push('<text x="' + (W / 2).toFixed(1) + '" y="' + (top + rowH * (n + 1) + 18).toFixed(1) +
+      '" text-anchor="middle" dominant-baseline="central" font-family="' + ART_STYLE.fontFamily +
+      '" font-size="' + cs.toFixed(1) + 'px" fill="#111">' + _esc(ct) + '</text>');
+  }
   var aria = cols.join(", ") + "; " + rows.map(function(r){ return r.join(" "); }).join("; ");
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
 }
@@ -2679,7 +2686,7 @@ const WORKED = {
   47: {
     label: 'Show a worked example',
     title: 'A club has 8 members. How many different 3-person committees can be formed?',
-    art: {"kind": "dtable", "cols": ["Picked in order", "The same two people"], "rows": [["AB", "BA"], ["AC", "CA"], ["AD", "DA"], ["BC", "CB"], ["BD", "DB"], ["CD", "DC"]], "caption": "Four people, pick two: 12 orderings, only 6 different pairs"},
+    art: {"kind": "dtable", "cols": ["Picked in order", "The same two people"], "rows": [["AB", "BA"], ["AC", "CA"], ["AD", "DA"], ["BC", "CB"], ["BD", "DB"], ["CD", "DC"]], "caption": "12 orderings, but only 6 different pairs"},
     steps: [
       'Shrink it first and look. Four people \u2014 A, B, C, D \u2014 pick 2. Picking in order gives 4 \u00d7 3 = 12. But read the table: AB and BA are the same two people. Every pair got written down twice, because 2 people order 2 ways. The real count is 12 \u00f7 2 = 6.',
       'Now the club, same idea. Pick 3 in order: 8 \u00d7 7 \u00d7 6 = 336.',
