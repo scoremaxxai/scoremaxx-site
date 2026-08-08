@@ -1507,43 +1507,70 @@ function _barGraph(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + _esc(aria) + '">' + g.join("") + "</svg>";
 }
 
+/* Text width in px for a serif face. A flat characters-times-a-constant
+   estimate undercounts capitals and overcounts i/l/t, which is exactly the
+   error that let a long bold header run past its column rule. */
+var _CHW = {" ": 0.25, ".": 0.26, ",": 0.26, ":": 0.28, ";": 0.28, "-": 0.34,
+            "(": 0.33, ")": 0.33, "/": 0.28, "%": 0.82,
+            "i": 0.29, "j": 0.29, "l": 0.29, "t": 0.35, "f": 0.35, "r": 0.39,
+            "m": 0.82, "w": 0.72, "I": 0.42, "J": 0.45, "M": 0.92, "W": 0.98};
+function _chw(ch) {
+  var w = _CHW[ch];
+  if (w != null) return w;
+  if (ch >= "A" && ch <= "Z") return 0.73;
+  if (ch >= "0" && ch <= "9") return 0.52;
+  return 0.52;
+}
+function _twf(s, size, bold) {
+  var t = String(s == null ? "" : s), w = 0;
+  for (var i = 0; i < t.length; i++) w += _chw(t.charAt(i));
+  return w * size * (bold ? 1.07 : 1);
+}
+
 function _twoWay(p) {
   var cols = p.cols || [], rows = p.rows || [];
   var nc = cols.length, nr = rows.length, i, r;
-  var W = 380, rowH = 28, top = 14;
+  var rowH = 28, top = 14, pad = 14;
+  // Every column is measured against its own widest cell and given the room
+  // that needs, and the whole figure grows if the headers are long. A fixed
+  // width with equal columns put "Takes the bus" straight through its rule.
+  var base = nc > 4 ? 11.5 : 12.5;
+  function bold(rI, cI) {
+    if (rI < 0) return true;                                   // header row
+    return (rI === nr - 1 && p.totalRow !== false) || cI === 0 ||
+           (cI === nc - 1 && p.totalCol !== false);
+  }
+  var natural = [];
+  for (i = 0; i < nc; i++) {
+    var w = _twf(cols[i], base, true);
+    for (r = 0; r < nr; r++)
+      w = Math.max(w, _twf(rows[r][i], base, bold(r, i)));
+    natural.push(Math.max(i === 0 ? 74 : 48, w + 22));
+  }
+  var body = 0;
+  for (i = 0; i < nc; i++) body += natural[i];
+  var W = Math.max(380, body + 2 * pad);
+  var x0 = (W - body) / 2, xs = [x0];
+  for (i = 0; i < nc; i++) xs.push(xs[i] + natural[i]);
+  var x1 = xs[nc];
   var H = top + rowH * (nr + 1) + 20;
-  var x0 = 14, x1 = W - 14;
-  // label column gets extra width; data columns split the rest evenly
-  var labW = Math.max(78, Math.min(120, (x1 - x0) * 0.30));
-  var dw = (x1 - x0 - labW) / (nc - 1);
-  var xs = [x0, x0 + labW];
-  for (i = 1; i < nc; i++) xs.push(x0 + labW + dw * i);
   var g = [];
   g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
-  // A header like "Did not like it" is wider than its column, and without
-  // this it runs straight through the rule beside it. Shrink to fit, the way
-  // the plain data table already does.
-  function cell(cx, cy, s, bold, avail) {
-    var t = String(s), size = nc > 4 ? 11.5 : 12.5;
-    if (avail) {
-      var wpx = _tw(t) * size / 12.8;
-      if (wpx > avail - 8) size = Math.max(7.5, size * (avail - 8) / wpx);
-    }
+  function cell(cx, cy, s, bd, avail) {
+    var t = String(s), size = base;
+    var wpx = _twf(t, size, bd);
+    if (wpx > avail - 12) size = Math.max(8, size * (avail - 12) / wpx);
     return '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) +
       '" text-anchor="middle" dominant-baseline="central" font-family="' + ART_STYLE.fontFamily +
       '" font-size="' + size.toFixed(1) + 'px" fill="#111"' +
-      (bold ? ' font-weight="600"' : '') + '>' + _esc(t) + '</text>';
+      (bd ? ' font-weight="600"' : '') + '>' + _esc(t) + '</text>';
   }
-  var colW = function (k) { return (k + 1 < xs.length ? xs[k + 1] : x1) - xs[k]; };
   for (i = 0; i < nc; i++)
-    g.push(cell((xs[i] + xs[i + 1]) / 2, top + rowH / 2, cols[i], true, colW(i)));
+    g.push(cell((xs[i] + xs[i + 1]) / 2, top + rowH / 2, cols[i], true, natural[i]));
   for (r = 0; r < nr; r++) {
     var cy = top + rowH * (r + 1) + rowH / 2;
-    var isTot = r === nr - 1 && p.totalRow !== false;
     for (i = 0; i < nc; i++)
-      g.push(cell((xs[i] + xs[i + 1]) / 2, cy, rows[r][i],
-                  isTot || i === 0 || (i === nc - 1 && p.totalCol !== false),
-                  colW(i)));
+      g.push(cell((xs[i] + xs[i + 1]) / 2, cy, rows[r][i], bold(r, i), natural[i]));
   }
   var yTop = top, yBot = top + rowH * (nr + 1);
   for (r = 0; r <= nr + 1; r++) {
@@ -1552,9 +1579,8 @@ function _twoWay(p) {
     g.push(_line([x0, y], [x1, y], heavy ? 1.6 : 0.9));
   }
   for (i = 0; i <= nc; i++) {
-    var x = i < xs.length ? xs[i] : x1;
     var hv = (i === 0 || i === 1 || i === nc || (p.totalCol !== false && i === nc - 1));
-    g.push(_line([x, yTop], [x, yBot], hv ? 1.6 : 0.9));
+    g.push(_line([xs[i], yTop], [xs[i], yBot], hv ? 1.6 : 0.9));
   }
   var aria = "two-way table. " + cols.join(", ") + ". " +
     rows.map(function(rr){ return rr.join(" "); }).join(". ");
