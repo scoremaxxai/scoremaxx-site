@@ -3406,6 +3406,20 @@ const WORKED = {
       'Sanity check: 13 blocks \u00d7 6 digits = 78 digits exactly. The 78th digit closes out block 13.'
     ],
     check: 'The trap is treating remainder 0 as position 1 and answering 3, the first digit. 3 will be one of your four choices every time this happens. And if your calculator will not give you a remainder, get one another way: for the 417th digit of a 6-block, 417 \u00f7 6 = 69.5, throw away the decimal to get 69, multiply back to get 414 \u2014 a position you know for certain is the end of a block \u2014 then count forward from 414 to 417. Three steps, so the 3rd digit of the block. Four small moves, no remainder button needed.'
+  },
+  68: {
+    label: 'Show a worked example',
+    title: '|2x + 1| \u2212 4 = 9. What is the sum of the solutions?',
+    steps: [
+      'Isolate the absolute value BEFORE you split. Splitting early is the top error on this concept, and everything outside the bars has to be cleared away first.',
+      'Add 4 to both sides: |2x + 1| = 13. Only now is there something to split.',
+      'Absolute value is distance from zero, so the inside is either 13 or \u221213. That is two equations, not one.',
+      'Plus case: 2x + 1 = 13, so 2x = 12 and x = 6.',
+      'Minus case: 2x + 1 = \u221213, so 2x = \u221214 and x = \u22127.',
+      'Check both: |2(6) + 1| \u2212 4 = 13 \u2212 4 = 9, and |2(\u22127) + 1| \u2212 4 = |\u221213| \u2212 4 = 9. Both work.',
+      'The question asked for the sum: 6 + (\u22127) = \u22121.'
+    ],
+    check: 'Two traps, and they are the two halves of the method. The first is solving only the plus case and answering 6 \u2014 these equations almost always have two solutions, and 6 will be one of your four choices. The second is splitting before isolating: setting 2x + 1 = 9 and 2x + 1 = \u22129 gives 4 and \u22125, neither of which works. Curiously that error does NOT change the sum, because it moves both roots the same distance in opposite directions \u2014 so on a sum question it hides, and on anything else it shows.'
   }
 };
 function conceptOfPQ(){
