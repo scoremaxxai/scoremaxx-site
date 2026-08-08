@@ -3155,6 +3155,19 @@ const WORKED = {
       'The 200 never got used. That feels wrong and is not \u2014 it was put there to see whether you would reach for it.'
     ],
     check: 'Now flip it on purpose, to see the trap from inside. P(cat | dog) stands you in the DOG room: 50 out of 120, about 0.417. Same 50 on top, completely different bottom. Both will be among your four choices, every time. The thing after the bar is the denominator \u2014 no exceptions.'
+  },
+  61: {
+    label: 'Show a worked example',
+    title: 'What is the solution set of \u221a(x + 7) = x \u2212 5?',
+    steps: [
+      'Square both sides to get the x out from under the root: x + 7 = (x \u2212 5)\u00b2 = x\u00b2 \u2212 10x + 25.',
+      'Bring it all to one side: 0 = x\u00b2 \u2212 11x + 18, which factors as (x \u2212 2)(x \u2212 9) = 0. So squaring hands you 2 and 9.',
+      'Now the part everyone skips. Squaring is not a reversible move \u2014 it turns \u22124 = 4 into 16 = 16 and calls it true. Anything it produces has to be taken back to the ORIGINAL equation.',
+      'Try x = 9: the left side is \u221a16 = 4, the right side is 9 \u2212 5 = 4. They agree, so 9 is a solution.',
+      'Try x = 2: the left side is \u221a9 = 3, the right side is 2 \u2212 5 = \u22123. A square root is never negative, so 3 = \u22123 is false. 2 is extraneous.',
+      'The solution set is x = 9 only.'
+    ],
+    check: 'Both 2 and 9 will be among your four choices, and so will "x = 2 and x = 9" \u2014 the answer you get by trusting the factoring and never checking. But do not swing the other way either: on half the radical equations you will meet, BOTH values survive, and throwing one away out of habit is just as wrong. Checking is how you find out which values work. It is not a rule that one of them has to go.'
   }
 };
 function conceptOfPQ(){
