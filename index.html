@@ -775,6 +775,61 @@ function _grid(p) {
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="coordinate plane with two marked points">' + g.join("") + "</svg>";
 }
 
+/* ── kind: linept — a line and/or a single point on a coordinate grid ───
+   Concept 63 asks whether a point lies on a line, so the figure has to carry
+   exactly one of the two and no more. _grid cannot be reused: it draws the
+   line THROUGH marked points and prints their coordinates, which on this
+   concept would print the answer next to the question.
+
+     { line: [A, B, C]   the line Ax + By = C, drawn right across the plot
+       point: [x, y]     a marked point
+       plabel: true      print the point's coordinates beside it            }
+
+   Give it a line and the student reads points off the grid; give it a point
+   and the student reads the coordinates off the grid. Either way the figure
+   replaces a line of symbols rather than decorating it.                    */
+function _linePt(p) {
+  var W = 380, H = 380, pad = 28, R = 10;
+  var sc = (W - 2 * pad) / (2 * R);
+  function X(v) { return pad + (v + R) * sc; }
+  function Y(v) { return H - pad - (v + R) * sc; }
+  var g = [], i;
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  for (i = -R; i <= R; i++) {
+    if (i === 0) continue;
+    g.push('<line x1="' + X(i) + '" y1="' + Y(-R) + '" x2="' + X(i) + '" y2="' + Y(R) + '" stroke="#d8d8d8" stroke-width="0.6"/>');
+    g.push('<line x1="' + X(-R) + '" y1="' + Y(i) + '" x2="' + X(R) + '" y2="' + Y(i) + '" stroke="#d8d8d8" stroke-width="0.6"/>');
+  }
+  g.push(_line([X(-R), Y(0)], [X(R), Y(0)], 1.6));
+  g.push(_line([X(0), Y(-R)], [X(0), Y(R)], 1.6));
+  [5, 10, -5, -10].forEach(function (t) {
+    g.push('<text x="' + X(t) + '" y="' + (Y(0) + 14) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + String(t).replace("-", "−") + "</text>");
+    g.push('<text x="' + (X(0) - 10) + '" y="' + (Y(t) + 3) + '" text-anchor="middle" font-size="9px" font-family="' + ART_STYLE.fontFamily + '" fill="#666">' + String(t).replace("-", "−") + "</text>");
+  });
+  g.push('<clipPath id="lpclip"><rect x="' + pad + '" y="' + pad + '" width="' + (W - 2 * pad) + '" height="' + (H - 2 * pad) + '"/></clipPath>');
+  if (p.line) {
+    var A = p.line[0], B = p.line[1], C = p.line[2], q1, q2;
+    if (B !== 0) { q1 = [-60, (C - A * -60) / B]; q2 = [60, (C - A * 60) / B]; }
+    else         { q1 = [C / A, -60];             q2 = [C / A, 60]; }
+    g.push('<line clip-path="url(#lpclip)" x1="' + X(q1[0]).toFixed(1) + '" y1="' + Y(q1[1]).toFixed(1) +
+           '" x2="' + X(q2[0]).toFixed(1) + '" y2="' + Y(q2[1]).toFixed(1) +
+           '" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+  }
+  if (p.point) {
+    var px = p.point[0], py = p.point[1];
+    g.push('<circle cx="' + X(px) + '" cy="' + Y(py) + '" r="4.5" fill="#111"/>');
+    if (p.plabel) {
+      var lx = X(px) + (px >= 0 ? -8 : 8), anchor = px >= 0 ? "end" : "start";
+      g.push('<text x="' + lx + '" y="' + (Y(py) - 9) + '" text-anchor="' + anchor +
+             '" font-size="13px" font-family="' + ART_STYLE.fontFamily + '" fill="#111">(' +
+             String(px).replace("-", "−") + ", " + String(py).replace("-", "−") + ")</text>");
+    }
+  }
+  var what = p.line ? (p.point ? "a line and a point" : "a line") : "a point";
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="coordinate plane showing ' +
+         what + '">' + g.join("") + "</svg>";
+}
+
 /* ── kind: rect — labeled rectangle (area/perimeter cost items) ───────── */
 function _rectFig(p, seed) {
   var W = 380, H = 280, h = _hash(seed || "x");
@@ -1760,6 +1815,7 @@ function renderArt(payload, itemId) {
   if (kind === "table")               return _xyTable(payload);
   if (kind === "fx_table")            return _fxTable(payload);
   if (kind === "grid")                return _grid(payload);
+  if (kind === "linept")              return _linePt(payload);
   if (kind === "rect")                return _rectFig(payload, itemId);
   if (kind === "box")                 return _boxFig(payload, itemId);
   if (kind === "count_table")         return _countTable(payload);
@@ -3181,6 +3237,20 @@ const WORKED = {
       'The answer is 1/(x \u2212 2).'
     ],
     check: 'The error this concept is built around is cancelling a TERM instead of a FACTOR. On the easy version, (x\u00b2 \u2212 9)/(x\u00b2 + 7x + 12), it is tempting to strike the x\u00b2 off both floors and write \u22129/(7x + 12). Test it: at x = 5 that comes to about \u22120.19, while the real value is 2/9, about 0.22. Not close. A factor multiplies the whole floor; a term is only added to it, and only factors cancel. That wrong answer will be among your four choices every time.'
+  },
+  63: {
+    label: 'Show a worked example',
+    title: 'The point (\u22122, k) lies on the line 3x \u2212 4y = 18. What is the value of k?',
+    steps: [
+      'A point is on a line only if putting its numbers into the equation makes a true statement. That is the whole concept \u2014 there is nothing else to it.',
+      'Here you are told it IS on the line, so instead of checking you substitute and solve. The point gives x = \u22122 and y = k.',
+      'Put both in: 3(\u22122) \u2212 4k = 18.',
+      '3(\u22122) is \u22126, so \u22126 \u2212 4k = 18.',
+      'Add 6 to both sides: \u22124k = 24.',
+      'Now divide by \u22124, not by 4. k = \u22126.',
+      'Check it, always: 3(\u22122) \u2212 4(\u22126) = \u22126 + 24 = 18. It matches, so \u22126 is right.'
+    ],
+    check: 'The trap is dividing by 4 and dropping the negative, which gives k = 6. Test that one the same way: 3(\u22122) \u2212 4(6) = \u22126 \u2212 24 = \u221230, nowhere near 18. 6 will be among your four choices, and the only thing standing between you and it is putting your answer back in. The other trap on this concept is reading the pair backwards \u2014 the first number is always x and the second is always y, no matter which letter the question is asking about.'
   }
 };
 function conceptOfPQ(){
