@@ -3380,6 +3380,19 @@ const WORKED = {
       'The right-hand side is r\u00b2, so the radius is \u221a36 = 6.'
     ],
     check: 'Two things are being tested at once here, and each has its own trap. The first is the sign flip \u2014 (y + 4) comes from k = \u22124, not k = 4, because the pattern already has a minus built into it. The second is the one the choices are built around: calling the radius 36. The right-hand side owes you a square root, and a radius of 36 would draw a circle six times too big. Whenever a circle question ends in a number, ask yourself whether that number is r or r\u00b2 before you write anything down.'
+  },
+  66: {
+    label: 'Show a worked example',
+    title: 'Which MUST be irrational: the sum of two irrational numbers, or 3 times an irrational number?',
+    steps: [
+      '"Must" means it holds every single time. So one counterexample is enough to kill a choice \u2014 you are not looking for the usual case, you are looking for whether there are any exceptions at all.',
+      'Try the sum first. \u221a2 is irrational. So is 2 \u2212 \u221a2, since if it were a fraction then \u221a2 would be one too.',
+      'Add them: \u221a2 + (2 \u2212 \u221a2) = 2. That is as rational as a number gets. So sums of irrationals are out \u2014 sometimes irrational, but not always.',
+      'Now 3 times an irrational. Suppose 3x were a fraction, say a/b. Then x would be a/(3b), which is also a fraction of two integers.',
+      'But x was irrational, so it is not a fraction. The supposition fails, and 3x cannot be one either.',
+      '3 times an irrational number MUST be irrational.'
+    ],
+    check: 'The trap is assuming irrational plus irrational is always irrational, and it will be one of your four choices every time. The pair above cancels to a plain 2. The same thing happens with products: \u221a2 \u00d7 \u221a2 = 2. What DOES always work is mixing the two kinds \u2014 an irrational plus a rational, or a nonzero rational times an irrational, can never come out rational. And while you are here: \u221a means nothing on its own. \u221a16 is 4, and 0.333\u2026 is 1/3. Look at the number, not the symbol.'
   }
 };
 function conceptOfPQ(){
