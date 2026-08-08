@@ -618,9 +618,12 @@ function _rightTriangle(p, seed) {
 
    Drawn to the real ratio, so the picture agrees with the arithmetic.      */
 function _specialTri(p) {
-  var W = 380, H = 280;
+  var W = 380, H = 310;
   var rx = (p.ratio && p.ratio[0]) || 1, ry = (p.ratio && p.ratio[1]) || 1;
-  var k = Math.min(215 / rx, 152 / ry);
+  // as large as the card allows once the side labels and the note strip have
+  // their room — a 30-60-90 is narrow, and a small one leaves the 30° corner
+  // with nowhere to put its label
+  var k = Math.min(250 / rx, 208 / ry);
   var runL = rx * k, riseL = ry * k;
   var x0 = (W - runL) / 2, x1 = x0 + runL;
   var y0 = ((H - 34) - riseL) / 2, y1 = y0 + riseL;
@@ -631,7 +634,7 @@ function _specialTri(p) {
   g.push(_line(R, Hp), _line(R, Vp), _line(Hp, Vp));
   g.push(_sqMark(R, Hp, Vp));
   var s = p.sides || {};
-  var la = _labelPos(R, Hp, I, 22), lb = _labelPos(R, Vp, I, 24), lh = _labelPos(Hp, Vp, I, 26);
+  var la = _labelPos(R, Hp, I, 22), lb = _labelPos(R, Vp, I, 26), lh = _labelPos(Hp, Vp, I, 28);
   if (s.leg_a)      g.push(_txt(la[0], la[1], s.leg_a));
   if (s.leg_b)      g.push(_txt(lb[0], lb[1], s.leg_b));
   if (s.hypotenuse) g.push(_txt(lh[0], lh[1], s.hypotenuse));
@@ -642,15 +645,29 @@ function _specialTri(p) {
     var P = t[1], other = t[2];
     var u1 = _unit(R[0] - P[0], R[1] - P[1]);
     var u2 = _unit(other[0] - P[0], other[1] - P[1]);
-    var ar = 26;
+    var bis = _unit(u1[0] + u2[0], u1[1] + u2[1]);
+    var cosang = Math.max(-1, Math.min(1, u1[0] * u2[0] + u1[1] * u2[1]));
+    var half = Math.acos(cosang) / 2;                  // half the corner angle
+    // How far along the bisector the label has to sit is decided by the corner
+    // itself, not by a fixed number. A label centred d along the bisector is
+    // d·sin(half) from each side; the label's own box reaches
+    // hw·|uy| + hh·|ux| toward that side. Solve for d and the 30° corner gets
+    // the room it needs while the 60° corner stays tucked in close.
+    var fs = parseFloat(ART_STYLE.font);
+    var hw = _tw(lab) / 2, hh = fs * 0.42, need = 0;
+    [u1, u2].forEach(function (u) {
+      var sup = hw * Math.abs(u[1]) + hh * Math.abs(u[0]);
+      need = Math.max(need, (sup + 6) / Math.max(0.08, Math.sin(half)));
+    });
+    var d = Math.max(28, need);
+    var ar = Math.max(13, Math.min(30, d * 0.52));     // the arc stays inside it
     var q1 = [P[0] + u1[0] * ar, P[1] + u1[1] * ar];
     var q2 = [P[0] + u2[0] * ar, P[1] + u2[1] * ar];
     var sweep = (u1[0] * u2[1] - u1[1] * u2[0]) > 0 ? 1 : 0;
-    g.push('<path d="M ' + q1[0].toFixed(1) + ' ' + q1[1].toFixed(1) + ' A ' + ar +
-           ' ' + ar + ' 0 0 ' + sweep + ' ' + q2[0].toFixed(1) + ' ' + q2[1].toFixed(1) +
+    g.push('<path d="M ' + q1[0].toFixed(1) + ' ' + q1[1].toFixed(1) + ' A ' + ar.toFixed(1) +
+           ' ' + ar.toFixed(1) + ' 0 0 ' + sweep + ' ' + q2[0].toFixed(1) + ' ' + q2[1].toFixed(1) +
            '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="1.5"/>');
-    var bis = _unit(u1[0] + u2[0], u1[1] + u2[1]);
-    g.push(_txt(P[0] + bis[0] * (ar + 17), P[1] + bis[1] * (ar + 17), lab));
+    g.push(_txt(P[0] + bis[0] * d, P[1] + bis[1] * d, lab));
   });
   g.push(_txt(W / 2, H - 14, ART_STYLE.note));
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="right triangle with angles ' +
