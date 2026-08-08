@@ -1520,20 +1520,30 @@ function _twoWay(p) {
   for (i = 1; i < nc; i++) xs.push(x0 + labW + dw * i);
   var g = [];
   g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
-  function cell(cx, cy, s, bold) {
+  // A header like "Did not like it" is wider than its column, and without
+  // this it runs straight through the rule beside it. Shrink to fit, the way
+  // the plain data table already does.
+  function cell(cx, cy, s, bold, avail) {
+    var t = String(s), size = nc > 4 ? 11.5 : 12.5;
+    if (avail) {
+      var wpx = _tw(t) * size / 12.8;
+      if (wpx > avail - 8) size = Math.max(7.5, size * (avail - 8) / wpx);
+    }
     return '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) +
       '" text-anchor="middle" dominant-baseline="central" font-family="' + ART_STYLE.fontFamily +
-      '" font-size="' + (nc > 4 ? 11.5 : 12.5) + 'px" fill="#111"' +
-      (bold ? ' font-weight="600"' : '') + '>' + _esc(s) + '</text>';
+      '" font-size="' + size.toFixed(1) + 'px" fill="#111"' +
+      (bold ? ' font-weight="600"' : '') + '>' + _esc(t) + '</text>';
   }
+  var colW = function (k) { return (k + 1 < xs.length ? xs[k + 1] : x1) - xs[k]; };
   for (i = 0; i < nc; i++)
-    g.push(cell((xs[i] + xs[i + 1]) / 2, top + rowH / 2, cols[i], true));
+    g.push(cell((xs[i] + xs[i + 1]) / 2, top + rowH / 2, cols[i], true, colW(i)));
   for (r = 0; r < nr; r++) {
     var cy = top + rowH * (r + 1) + rowH / 2;
     var isTot = r === nr - 1 && p.totalRow !== false;
     for (i = 0; i < nc; i++)
       g.push(cell((xs[i] + xs[i + 1]) / 2, cy, rows[r][i],
-                  isTot || i === 0 || (i === nc - 1 && p.totalCol !== false)));
+                  isTot || i === 0 || (i === nc - 1 && p.totalCol !== false),
+                  colW(i)));
   }
   var yTop = top, yBot = top + rowH * (nr + 1);
   for (r = 0; r <= nr + 1; r++) {
