@@ -1685,6 +1685,98 @@ function _tapeFig(p) {
     parts.join(":") + (p.total ? ", total " + _esc(p.total) : "") + '">' + g.join("") + "</svg>";
 }
 
+/* A HISTOGRAM, drawn so its SHAPE is the answer.
+
+   Concept 71 asks what a pile of data looks like, so the drawing has to make
+   uniform, normal, bimodal, skewed-left and skewed-right unmistakable at a
+   glance and unmistakable from each other. Three things do that work:
+
+     - THE BARS TOUCH. A bar chart puts gaps between categories because the
+       categories are separate things. A histogram's bins are one continuous
+       number line cut into pieces, and gaps break the outline the student is
+       being asked to read. Bimodal in particular stops looking like two humps
+       with a dip and starts looking like ten unrelated bars.
+     - THE BASELINE IS DRAWN THROUGH EVERY BIN, including empty ones, so a
+       zero-count bin reads as a real gap in the data rather than as the edge
+       of the picture.
+     - THE Y-AXIS ALWAYS STARTS AT ZERO and its top is a round number above
+       the tallest bar. Starting anywhere else exaggerates whichever bar
+       happens to be shortest, which would change the apparent shape — the one
+       thing the question is about.
+
+   Payload: {kind:"dist", counts:[...], labels:[...], title, xlabel, ylabel}.
+   labels may be shorter than counts, in which case bins are labelled by index.
+*/
+function _dist(p) {
+  var counts = p.counts || [], n = counts.length;
+  var W = 380, H = 244;
+  var x0 = 46, x1 = W - 16, yb = H - 52, yt = 34;
+  var i, hi = 0;
+  for (i = 0; i < n; i++) if (counts[i] > hi) hi = counts[i];
+  if (!(hi > 0)) hi = 1;
+  // a round top: 1, 2, 5, 10, 20, 50 ... whichever first clears the tallest bar
+  // in four or five steps, so the gridlines stay readable at any scale
+  var step = 1, mult = [1, 2, 5];
+  for (var e = 0; e < 8; e++) {
+    var done = false;
+    for (var m = 0; m < 3; m++) {
+      var cand = mult[m] * Math.pow(10, e);
+      if (hi / cand <= 5) { step = cand; done = true; break; }
+    }
+    if (done) break;
+  }
+  var ymax = Math.ceil(hi / step) * step;
+  if (ymax <= 0) ymax = step;
+
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  if (p.title) g.push('<text x="' + (W / 2) + '" y="18" text-anchor="middle" font-family="' +
+                      ART_STYLE.fontFamily + '" font-size="13px" fill="#111">' + _esc(p.title) + '</text>');
+  for (var v = 0; v <= ymax + 1e-9; v += step) {
+    var y = yb - (yb - yt) * v / ymax;
+    if (v > 0)
+      g.push('<line x1="' + x0 + '" y1="' + y.toFixed(1) + '" x2="' + x1 + '" y2="' +
+             y.toFixed(1) + '" stroke="#c8ccd4" stroke-width="1"/>');
+    g.push('<text x="' + (x0 - 7) + '" y="' + y.toFixed(1) +
+           '" text-anchor="end" dominant-baseline="central" font-family="' +
+           ART_STYLE.fontFamily + '" font-size="11px" fill="#111">' + v + '</text>');
+  }
+  var bw = (x1 - x0) / n;
+  // every bin labelled if they fit, otherwise every other one — never a
+  // half-printed label, and never a label narrower than the text in it
+  var everyOther = bw < 30;
+  for (i = 0; i < n; i++) {
+    var bx = x0 + bw * i;
+    // round the TOP of the bar, then take the height from the rounded top, so
+    // every bar's foot lands on exactly the same baseline. Rounding the top
+    // and the height independently leaves them disagreeing by up to a tenth of
+    // a pixel, and a row of bars whose feet are a tenth apart is a ragged
+    // baseline on a figure whose whole job is its outline.
+    var top = +((yb - (yb - yt) * counts[i] / ymax).toFixed(1));
+    if (counts[i] > 0)
+      g.push('<rect x="' + bx.toFixed(1) + '" y="' + top.toFixed(1) +
+             '" width="' + bw.toFixed(1) + '" height="' + (yb - top).toFixed(1) +
+             '" fill="#dfe3ea" stroke="' + ART_STYLE.stroke + '" stroke-width="1.5"/>');
+    if (!everyOther || i % 2 === 0) {
+      var lab = (p.labels && p.labels[i] != null) ? p.labels[i] : (i + 1);
+      g.push('<text x="' + (bx + bw / 2).toFixed(1) + '" y="' + (yb + 15) +
+             '" text-anchor="middle" font-family="' + ART_STYLE.fontFamily +
+             '" font-size="11px" fill="#111">' + _esc(lab) + '</text>');
+    }
+  }
+  g.push(_line([x0, yt - 8], [x0, yb], 1.8), _line([x0, yb], [x1, yb], 1.8));
+  if (p.ylabel)
+    g.push('<text x="12" y="' + ((yt + yb) / 2).toFixed(1) + '" text-anchor="middle" ' +
+           'transform="rotate(-90 12 ' + ((yt + yb) / 2).toFixed(1) + ')" font-family="' +
+           ART_STYLE.fontFamily + '" font-size="11px" fill="#111">' + _esc(p.ylabel) + '</text>');
+  if (p.xlabel)
+    g.push('<text x="' + (W / 2) + '" y="' + (H - 14) + '" text-anchor="middle" font-family="' +
+           ART_STYLE.fontFamily + '" font-size="11px" fill="#111">' + _esc(p.xlabel) + '</text>');
+  var aria = "histogram, bin counts " + counts.join(", ");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
+         _esc(aria) + '">' + g.join("") + "</svg>";
+}
+
 function _barGraph(p) {
   var cats = p.cats || [], vals = p.vals || [];
   var n = cats.length, i;
@@ -2001,6 +2093,7 @@ function renderArt(payload, itemId) {
   if (kind === "circle_fig")          return _circleFig(payload);
   if (kind === "tape")                return _tapeFig(payload);
   if (kind === "bar")                 return _barGraph(payload);
+  if (kind === "dist")                return _dist(payload);
   if (kind === "twoway")              return _twoWay(payload);
   if (kind === "ineq_line")           return _ineqLine(payload);
   if (kind === "sim_pair")            return _simPair(payload);
@@ -3507,6 +3600,20 @@ const WORKED = {
       'The range is 35 \u2212 5 = 30. It was 20. That one changed \u2014 and it is the only one that did.'
     ],
     check: 'The instinct is that adding numbers changes everything, and it is wrong twice over here. Ask instead what each measure is actually made of. The mean is made of the TOTAL, so it moves only when the additions are off balance. The median is made of POSITION, so it moves only when the middle of the line shifts. The range is made of the TWO ENDS, so it moves the moment a new value goes past either end \u2014 which is why the range is usually the first to break and the mean is the one most often left alone.'
+  },
+  71: {
+    label: 'Show a worked example',
+    title: '200 people are each asked to pick a whole number from 1 to 8. Almost everybody picks 6, 7 or 8. A handful pick 3, 4 or 5. One or two pick 1 or 2. What shape is this distribution?',
+    art: {kind:'dist', counts:[2,3,6,10,15,45,64,55], labels:['1','2','3','4','5','6','7','8'], xlabel:'number picked', ylabel:'how many people'},
+    steps: [
+      'Do not try to name it in one go. Split it into two separate questions and answer them one at a time.',
+      'FIRST: where is the crowd? At 6, 7 and 8 \u2014 that is 164 of the 200 people. The crowd is sitting at the high end, on the RIGHT.',
+      'SECOND: where is the tail? Running down from 5 to 4 to 3 to 2 to 1, getting thinner the whole way: 15, 10, 6, 3, 2. The tail points LEFT.',
+      'Now the rule, and it is the only thing here worth memorising: THE SKEW IS WHERE THE TAIL IS. Not where the crowd is.',
+      'The tail points left, so this is SKEWED LEFT \u2014 even though the crowd is on the right.',
+      'Check it against the other four names. Uniform? No \u2014 6, 7 and 8 are far more common than the rest. Normal? No \u2014 it does not fall away evenly on both sides. Bimodal? No \u2014 there is one hump, not two humps with a dip between them.'
+    ],
+    check: 'Look at what just happened: the crowd is on the right and the name says left. That mismatch IS the question \u2014 it is why this gets asked at all, and naming the shape by where the crowd sits gets it backwards every single time. Say the rule out loud when you see one. Two more things to watch. Bimodal needs two genuine humps with a real dip between them; two values that happen to tie for most common in a short list is not bimodal, and a flat-ish top is not a dip. And if you ever need to check a skew with arithmetic rather than by eye, the long tail drags the MEAN towards it: here the mean is 6.495 and the median is 7, and the mean sitting below the median is the tail pulling it left.'
   }
 };
 function conceptOfPQ(){
