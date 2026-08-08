@@ -676,6 +676,68 @@ function _specialTri(p) {
          '">' + g.join("") + "</svg>";
 }
 
+/* ── kind: dilate — a figure and its image, drawn to the true scale ─────
+   Concept 69 is entirely about the fact that lengths take k and areas take k².
+   _simPair cannot carry it: its two triangles are fixed at 96×62 and 132×104,
+   which is not a dilation of anything. If the picture is not drawn to the
+   actual scale factor, the picture is teaching the wrong thing.
+
+     { shape: "rect" | "tri" | "box"
+       k: 1.5                       the true scale factor, used to size the image
+       pre:  {w, h, d, name}        labels for the original; any may be omitted
+       post: {w, h, d, name}        labels for the image; use "x" for the unknown }
+
+   Both figures are drawn from the same base size scaled by k, so a student who
+   measures the drawing gets the same answer as one who does the arithmetic.  */
+function _dilate(p) {
+  var W = 380, H = 260;
+  var k = p.k || 1, shape = p.shape || "rect";
+  var pre = p.pre || {}, post = p.post || {};
+  // a base size that leaves both figures inside the card whatever k is
+  var big = Math.max(1, k), room = 132;
+  var bw = Math.min(112, room / big) , bh = Math.min(86, (room * 0.72) / big);
+  if (shape === "box") { bw = Math.min(88, 104 / big); bh = Math.min(56, 68 / big); }
+  var g = [];
+  g.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="#ffffff" rx="10"/>');
+  var yB = shape === "box" ? 168 : 172;
+
+  function rect(cx, w, h, t) {
+    var x0 = cx - w / 2, y0 = yB - h;
+    var A = [x0, yB], B = [x0 + w, yB], C = [x0 + w, y0], D = [x0, y0];
+    g.push(_line(A, B), _line(B, C), _line(C, D), _line(D, A));
+    if (t.h) g.push(_txt(x0 - _tw(t.h) / 2 - 8, yB - h / 2, t.h));
+    if (t.w) g.push(_txt(cx, yB + 18, t.w));
+    if (t.name) g.push(_txt(cx, y0 - 14, t.name));
+  }
+  function tri(cx, w, h, t) {
+    var x0 = cx - w / 2, y0 = yB - h;
+    var A = [x0, yB], B = [x0 + w, yB], C = [x0, y0];
+    g.push(_line(A, B), _line(B, C), _line(C, A));
+    g.push(_sqMark(A, B, C, 9));
+    if (t.h) g.push(_txt(x0 - _tw(t.h) / 2 - 8, yB - h / 2, t.h));
+    if (t.w) g.push(_txt(cx, yB + 18, t.w));
+    if (t.name) g.push(_txt(cx, y0 - 14, t.name));
+  }
+  function box(cx, w, h, t) {
+    var ox = w * 0.34, oy = -h * 0.42;
+    var x0 = cx - (w + ox) / 2, y1 = yB, y0 = y1 - h;
+    var A = [x0, y1], B = [x0 + w, y1], C = [x0 + w, y0], D = [x0, y0];
+    var E = [D[0] + ox, D[1] + oy], F2 = [C[0] + ox, C[1] + oy], G2 = [B[0] + ox, B[1] + oy];
+    g.push(_line(A, B), _line(B, C), _line(C, D), _line(D, A));
+    g.push(_line(D, E), _line(C, F2), _line(B, G2), _line(E, F2), _line(F2, G2));
+    if (t.w) g.push(_txt(cx - ox / 2, y1 + 18, t.w));
+    if (t.h) g.push(_txt(x0 - _tw(t.h) / 2 - 8, y1 - h / 2, t.h));
+    if (t.d) g.push(_txt(B[0] + ox / 2 + 12, (B[1] + G2[1]) / 2 + 2, t.d, "start"));
+    if (t.name) g.push(_txt(cx, y0 + oy - 14, t.name));
+  }
+  var drawOne = shape === "tri" ? tri : (shape === "box" ? box : rect);
+  drawOne(102, bw, bh, pre);
+  drawOne(272, bw * k, bh * k, post);
+  g.push(_txt(W / 2, H - 14, ART_STYLE.note));
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="a figure and its dilated image, scale factor ' +
+         _esc(String(k)) + '">' + g.join("") + "</svg>";
+}
+
 /* ── kind: two_right_triangles ────────────────────────────────────────── */
 function _twoRightTriangles(p, seed) {
   var W = 400, H = 280;
@@ -1913,6 +1975,7 @@ function renderArt(payload, itemId) {
   if (!payload) return "";
   var kind = payload.kind || payload.type;    // concept-1 payloads use "type"
   if (kind === "right_triangle")      return _rightTriangle(payload, itemId);
+  if (kind === "dilate")              return _dilate(payload);
   if (kind === "special_tri")         return _specialTri(payload);
   if (kind === "two_right_triangles") return _twoRightTriangles(payload, itemId);
   if (kind === "table")               return _xyTable(payload);
@@ -3420,6 +3483,18 @@ const WORKED = {
       'The question asked for the sum: 6 + (\u22127) = \u22121.'
     ],
     check: 'Two traps, and they are the two halves of the method. The first is solving only the plus case and answering 6 \u2014 these equations almost always have two solutions, and 6 will be one of your four choices. The second is splitting before isolating: setting 2x + 1 = 9 and 2x + 1 = \u22129 gives 4 and \u22125, neither of which works. Curiously that error does NOT change the sum, because it moves both roots the same distance in opposite directions \u2014 so on a sum question it hides, and on anything else it shows.'
+  },
+  69: {
+    label: 'Show a worked example',
+    title: 'A figure with an area of 24 square units is dilated by a scale factor of 3/2. What is the new area?',
+    steps: [
+      'A dilation resizes a figure without changing its shape. Every LENGTH multiplies by the scale factor k.',
+      'Area is different, and this is the whole concept. A dilation stretches the figure in two directions at once, so area picks the factor up twice: it multiplies by k\u00b2.',
+      'Square the scale factor first: (3/2)\u00b2 = 9/4.',
+      'Now multiply: 24 \u00d7 9/4. Divide first \u2014 24 \u00f7 4 = 6 \u2014 then 6 \u00d7 9 = 54.',
+      'The new area is 54 square units.'
+    ],
+    check: 'The trap is multiplying the area by 3/2 instead of by 9/4: 24 \u00d7 1.5 = 36, and 36 will be one of your four choices. Keep the three rules straight and this concept is over: lengths use k, areas use k\u00b2, volumes use k\u00b3. Perimeter counts as a length, so it takes k \u2014 and surface area counts as an area, so it takes k\u00b2 even though it belongs to a solid. If you can say which of the three a quantity is, you already know which power to use.'
   }
 };
 function conceptOfPQ(){
