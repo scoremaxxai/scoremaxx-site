@@ -3103,6 +3103,22 @@ const WORKED = {
       'Sanity check: 84 sits between 78 and 88, and leans toward 88 because the bigger class scored higher. A weighted average ALWAYS lands between the smallest and largest value, closer to the heavier one.'
     ],
     check: 'The trap is (78 + 88) \u00f7 2 = 83, and 83 will be one of your four choices. It is only one point off, which is exactly why it is dangerous \u2014 it looks reasonable. Ask yourself which side carries more weight, then check your answer leans that way.'
+  },
+  60: {
+    label: 'Show a worked example',
+    title: 'Of 200 people surveyed, 120 own a dog and 80 own a cat. 50 own both. Find P(dog | cat).',
+    art: {"kind":"twoway","cols":["","Cat","No cat","Total"],
+          "rows":[["Dog","50","70","120"],["No dog","30","50","80"],
+                  ["Total","80","120","200"]]},
+    steps: [
+      'Read the bar out loud: "dog, GIVEN cat." The thing after the bar is what you already know, so cat owners are the room you are standing in.',
+      'That clears the room. The 120 people with no cat are gone from the conversation entirely. Your world is 80 people now.',
+      'Of those 80, how many also own a dog? The overlap: 50.',
+      '50/80. Divide top and bottom by 10: 5/8, or 0.625.',
+      'Feel the size of it. More than half of the cat owners in this survey also have a dog. That is what 0.625 is saying.',
+      'The 200 never got used. That feels wrong and is not \u2014 it was put there to see whether you would reach for it.'
+    ],
+    check: 'Now flip it on purpose, to see the trap from inside. P(cat | dog) stands you in the DOG room: 50 out of 120, about 0.417. Same 50 on top, completely different bottom. Both will be among your four choices, every time. The thing after the bar is the denominator \u2014 no exceptions.'
   }
 };
 function conceptOfPQ(){
