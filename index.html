@@ -3168,6 +3168,19 @@ const WORKED = {
       'The solution set is x = 9 only.'
     ],
     check: 'Both 2 and 9 will be among your four choices, and so will "x = 2 and x = 9" \u2014 the answer you get by trusting the factoring and never checking. But do not swing the other way either: on half the radical equations you will meet, BOTH values survive, and throwing one away out of habit is just as wrong. Checking is how you find out which values work. It is not a rule that one of them has to go.'
+  },
+  62: {
+    label: 'Show a worked example',
+    title: 'Which of the following is equivalent to [(x\u00b2 \u2212 4)/(x\u00b2 + 5x + 6)] \u00f7 [(x\u00b2 \u2212 4x + 4)/(x + 3)]?',
+    steps: [
+      'Dividing by a fraction means multiplying by its flip. Turn the second one over first, before you factor anything \u2014 flipping later is where this goes wrong.',
+      'Now factor all four pieces. x\u00b2 \u2212 4 is a difference of squares: (x \u2212 2)(x + 2). x\u00b2 + 5x + 6 needs two numbers multiplying to 6 and adding to 5: (x + 2)(x + 3). x\u00b2 \u2212 4x + 4 is a perfect square: (x \u2212 2)(x \u2212 2).',
+      'So you have (x \u2212 2)(x + 2) over (x + 2)(x + 3), times (x + 3) over (x \u2212 2)(x \u2212 2).',
+      'Cancel across the whole product, not one fraction at a time. The (x + 2) goes. The (x + 3) goes. The (x \u2212 2) on top kills ONE of the two below it, not both.',
+      'What is left on top is 1, and what is left underneath is a single (x \u2212 2).',
+      'The answer is 1/(x \u2212 2).'
+    ],
+    check: 'The error this concept is built around is cancelling a TERM instead of a FACTOR. On the easy version, (x\u00b2 \u2212 9)/(x\u00b2 + 7x + 12), it is tempting to strike the x\u00b2 off both floors and write \u22129/(7x + 12). Test it: at x = 5 that comes to about \u22120.19, while the real value is 2/9, about 0.22. Not close. A factor multiplies the whole floor; a term is only added to it, and only factors cancel. That wrong answer will be among your four choices every time.'
   }
 };
 function conceptOfPQ(){
