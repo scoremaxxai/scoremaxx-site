@@ -3495,6 +3495,18 @@ const WORKED = {
       'The new area is 54 square units.'
     ],
     check: 'The trap is multiplying the area by 3/2 instead of by 9/4: 24 \u00d7 1.5 = 36, and 36 will be one of your four choices. Keep the three rules straight and this concept is over: lengths use k, areas use k\u00b2, volumes use k\u00b3. Perimeter counts as a length, so it takes k \u2014 and surface area counts as an area, so it takes k\u00b2 even though it belongs to a solid. If you can say which of the three a quantity is, you already know which power to use.'
+  },
+  70: {
+    label: 'Show a worked example',
+    title: 'The set 10, 20, 30 has both 5 and 35 added to it. Which of the mean, the median and the range change?',
+    steps: [
+      'Work out all three BEFORE. The mean is (10 + 20 + 30) \u00f7 3 = 20. The middle value of 10, 20, 30 is 20, so the median is 20. The range is 30 \u2212 10 = 20.',
+      'Now the set is 5, 10, 20, 30, 35. The mean is (5 + 10 + 20 + 30 + 35) \u00f7 5 = 100 \u00f7 5 = 20. It did not move.',
+      'That is the part worth slowing down for. 5 sits 15 below the old mean and 35 sits 15 above it, so the two pull equally hard in opposite directions and cancel. A new value only drags the mean if it is off balance.',
+      'The median is the middle of five values, which is 20 again. Both new values landed outside the old ones, one on each side, so the middle of the line never shifted.',
+      'The range is 35 \u2212 5 = 30. It was 20. That one changed \u2014 and it is the only one that did.'
+    ],
+    check: 'The instinct is that adding numbers changes everything, and it is wrong twice over here. Ask instead what each measure is actually made of. The mean is made of the TOTAL, so it moves only when the additions are off balance. The median is made of POSITION, so it moves only when the middle of the line shifts. The range is made of the TWO ENDS, so it moves the moment a new value goes past either end \u2014 which is why the range is usually the first to break and the mean is the one most often left alone.'
   }
 };
 function conceptOfPQ(){
