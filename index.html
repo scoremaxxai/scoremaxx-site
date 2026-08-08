@@ -887,6 +887,35 @@ function _linePt(p) {
            '" x2="' + X(q2[0]).toFixed(1) + '" y2="' + Y(q2[1]).toFixed(1) +
            '" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
   }
+  // a circle, drawn true to the grid so its centre and radius can be read off
+  // the axes — concept 65's figure has to REPLACE the equation, not sit beside
+  // it, so the centre is marked but never labelled with its coordinates
+  if (p.circle) {
+    var ch = p.circle[0], ck = p.circle[1], cr = p.circle[2];
+    g.push('<circle clip-path="url(#lpclip)" cx="' + X(ch).toFixed(1) + '" cy="' + Y(ck).toFixed(1) +
+           '" r="' + (cr * sc).toFixed(1) + '" fill="none" stroke="' + ART_STYLE.stroke +
+           '" stroke-width="2"/>');
+    if (p.centre !== false)
+      g.push('<circle cx="' + X(ch).toFixed(1) + '" cy="' + Y(ck).toFixed(1) + '" r="3.5" fill="#111"/>');
+  }
+  // p.ptags names what each marked point IS. Without it, "the centre is one of
+  // the two points shown" is not a question — either point could be the
+  // centre, and the two readings give different circles.
+  if (p.points) {
+    var tags = p.ptags || [];
+    p.points.forEach(function (pp, pi) {
+      g.push('<circle cx="' + X(pp[0]).toFixed(1) + '" cy="' + Y(pp[1]).toFixed(1) + '" r="4.5" fill="#111"/>');
+      var qx = X(pp[0]) + (pp[0] >= 0 ? -8 : 8), qa = pp[0] >= 0 ? "end" : "start";
+      if (p.plabel)
+        g.push('<text x="' + qx.toFixed(1) + '" y="' + (Y(pp[1]) - 9).toFixed(1) + '" text-anchor="' + qa +
+               '" font-size="13px" font-family="' + ART_STYLE.fontFamily + '" fill="#111">(' +
+               String(pp[0]).replace("-", "−") + ", " + String(pp[1]).replace("-", "−") + ")</text>");
+      if (tags[pi])
+        g.push('<text x="' + qx.toFixed(1) + '" y="' + (Y(pp[1]) + (p.plabel ? 16 : 14)).toFixed(1) +
+               '" text-anchor="' + qa + '" font-size="11.5px" font-family="' + ART_STYLE.fontFamily +
+               '" fill="#555">' + _esc(tags[pi]) + "</text>");
+    });
+  }
   if (p.point) {
     var px = p.point[0], py = p.point[1];
     g.push('<circle cx="' + X(px) + '" cy="' + Y(py) + '" r="4.5" fill="#111"/>');
@@ -897,7 +926,8 @@ function _linePt(p) {
              String(px).replace("-", "−") + ", " + String(py).replace("-", "−") + ")</text>");
     }
   }
-  var what = p.line ? (p.point ? "a line and a point" : "a line") : "a point";
+  var what = p.circle ? "a circle" : (p.line ? (p.point ? "a line and a point" : "a line") :
+              (p.points ? "some marked points" : "a point"));
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="coordinate plane showing ' +
          what + '">' + g.join("") + "</svg>";
 }
@@ -3336,6 +3366,20 @@ const WORKED = {
       'Check with Pythagoras: 6\u00b2 + (6\u221a3)\u00b2 = 36 + 108 = 144, and 12\u00b2 = 144. Clean.'
     ],
     check: 'Here is the part you have to know about, because it is unlike every other trap on this test. Suppose you swap the legs and treat 6\u221a3 as the SHORT leg. Then the long leg becomes 6\u221a3 \u00d7 \u221a3 = 18 and the hypotenuse becomes 12\u221a3, about 20.8. Now check THAT triangle with Pythagoras: (6\u221a3)\u00b2 + 18\u00b2 = 108 + 324 = 432, and (12\u221a3)\u00b2 = 432 as well. It passes. The arithmetic is perfectly happy either way, because the swapped triangle is a real 30-60-90 \u2014 just a bigger one than the question asked about. No calculation catches this mistake. Only matching the short leg to the 30\u00b0 angle does, and you have to do it first. 20.8 will be one of your four choices.'
+  },
+  65: {
+    label: 'Show a worked example',
+    title: 'What are the centre and radius of the circle x\u00b2 + y\u00b2 \u2212 6x + 8y \u2212 11 = 0?',
+    steps: [
+      'This one is in disguise. The pattern you want is (x \u2212 h)\u00b2 + (y \u2212 k)\u00b2 = r\u00b2, so complete the square on each variable to get there.',
+      'Group them and move the number across: (x\u00b2 \u2212 6x) + (y\u00b2 + 8y) = 11.',
+      'For x: half of \u22126 is \u22123, and (\u22123)\u00b2 = 9. Add 9 to BOTH sides.',
+      'For y: half of 8 is 4, and 4\u00b2 = 16. Add 16 to BOTH sides.',
+      '(x \u2212 3)\u00b2 + (y + 4)\u00b2 = 11 + 9 + 16 = 36.',
+      'Now read it off. The signs inside flip back: (x \u2212 3) means h = 3, and (y + 4) means k = \u22124. The centre is (3, \u22124).',
+      'The right-hand side is r\u00b2, so the radius is \u221a36 = 6.'
+    ],
+    check: 'Two things are being tested at once here, and each has its own trap. The first is the sign flip \u2014 (y + 4) comes from k = \u22124, not k = 4, because the pattern already has a minus built into it. The second is the one the choices are built around: calling the radius 36. The right-hand side owes you a square root, and a radius of 36 would draw a circle six times too big. Whenever a circle question ends in a number, ask yourself whether that number is r or r\u00b2 before you write anything down.'
   }
 };
 function conceptOfPQ(){
