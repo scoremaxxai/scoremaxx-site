@@ -3104,6 +3104,24 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe, sectio
       g.forEach(it=>{ const f = foldOf(it) || '_'; if(!by[f]){ by[f] = []; order.push(f); } by[f].push(it); });
       if(order.length < 2) return g.sort(()=>Math.random()-0.5);
       order.forEach(k=>by[k].sort(()=>Math.random()-0.5));
+      // UNEQUAL folds (English's 5/11 works/fails) cannot use the round-robin
+      // below: one-per-fold-per-round over-samples the small folds, and a
+      // simulated first ten came out 50% NO-CHANGE-correct on a bank built to
+      // be 31%. Deal them PROPORTIONALLY instead — each item gets a jittered
+      // position scaled by its fold's share, so a fold with 5 of 32 items
+      // supplies ~5 of every 32 dealt, from the first question on, without a
+      // predictable every-third-item rhythm a student could exploit. Equal
+      // folds (every math concept) keep the exact weave below, untouched.
+      const sizes = order.map(k=>by[k].length);
+      if(Math.min.apply(null, sizes) !== Math.max.apply(null, sizes)){
+        const paced = [];
+        order.forEach(k=>{
+          const n = by[k].length;
+          by[k].forEach((it, j)=>paced.push([ (j + Math.random()) * g.length / n, it ]));
+        });
+        paced.sort((a,b)=>a[0]-b[0]);
+        return paced.map(p=>p[1]);
+      }
       order.sort(()=>Math.random()-0.5);          // which variant leads varies by session
       // A fold tag may carry TWO dimensions, written "sub-form \u00b7 presentation".
       // Walk the fold grid diagonally so consecutive folds differ on BOTH — a
