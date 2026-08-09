@@ -3089,11 +3089,7 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
     // each variant separately and round-robin them. Items tag their variant as
     // art_payload.fold; untagged items fall back to a plain shuffle.
     const foldOf = it => { const p = it && it.art_payload; return (p && p.fold) || null; };
-    const headOf = s => { const i = String(s || '').indexOf('\u00b7');
-                          return i < 0 ? String(s || '') : s.slice(0, i).trim(); };
-    const tailOf = s => { const i = String(s || '').lastIndexOf('\u00b7');
-                          return i < 0 ? '' : s.slice(i + 1).trim(); };
-    function stratify(g, lead){
+    function stratify(g){
       const by = {}, order = [];
       g.forEach(it=>{ const f = foldOf(it) || '_'; if(!by[f]){ by[f] = []; order.push(f); } by[f].push(it); });
       if(order.length < 2) return g.sort(()=>Math.random()-0.5);
@@ -3105,18 +3101,15 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
       // items of a surface land on the same sub-form, which shows up in any
       // ten-question run. Tags without a "\u00b7" are untouched, so older
       // concepts behave exactly as before.
+      const headOf = s => { const i = String(s || '').indexOf('\u00b7');
+                            return i < 0 ? String(s || '') : s.slice(0, i).trim(); };
+      const tailOf = s => { const i = String(s || '').lastIndexOf('\u00b7');
+                            return i < 0 ? '' : s.slice(i + 1).trim(); };
       const tails = [], heads = [];
       order.forEach(k=>{
         const t = tailOf(k); if(tails.indexOf(t) < 0) tails.push(t);
         const h = headOf(k); if(heads.indexOf(h) < 0) heads.push(h);
       });
-      // The caller may pin which presentation this surface LEADS with. Each
-      // surface alternates on its own already; what it cannot know alone is
-      // what the other four are doing, so a run can still come out five of one
-      // kind then five of the other. Pinning the leads makes the whole round
-      // predictable, which is what lets the round builder below alternate
-      // question by question.
-      if(lead && tails.length === 2 && tails[0] !== lead) tails.reverse();
       if(tails.length > 1){
         const woven = [];
         if(heads.length > 1 && order.length === tails.length * heads.length){
@@ -3145,50 +3138,7 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
       }
       return out;
     }
-    // STRICT ALTERNATION of the presentation dimension. Where the second half
-    // of the fold is what the item LOOKS like — a histogram or the same data
-    // written out, a figure on a grid or the same ellipse in symbols — a
-    // student should meet them one and one. Simulated over 4000 sessions the
-    // plain round-robin flipped presentation on only 51% of consecutive
-    // questions and served five of a kind in a row in 11% of ten-question sets.
-    //
-    // THIS ONLY APPLIES WHEN THE TAIL IS REALLY PRESENTATIONAL, and the test is
-    // structural rather than by name: the tail has to decide whether the item
-    // carries a figure. That distinction matters. On concept 70 the second
-    // dimension is "the mean holds still / the mean moves" — a CONCEPTUAL fold
-    // that is frequently the answer itself, and strictly alternating it would
-    // hand the answer to anyone who noticed the pattern. Concepts like that
-    // fail the test and are left exactly as they were.
-    const hasArt = it => { const p = it && it.art_payload;
-                           return (p && (p.kind || p.type)) ? '1' : '0'; };
-    let ALT = null, LEADS = null;
-    {
-      const seen = {};
-      let tagged = true;
-      items.forEach(it=>{
-        const f = foldOf(it);
-        if(!f || f.indexOf('\u00b7') < 0){ tagged = false; return; }
-        const t = tailOf(f);
-        (seen[t] = seen[t] || {})[hasArt(it)] = 1;
-      });
-      const ts = Object.keys(seen);
-      if(tagged && ts.length === 2
-         && Object.keys(seen[ts[0]]).length === 1
-         && Object.keys(seen[ts[1]]).length === 1
-         && Object.keys(seen[ts[0]])[0] !== Object.keys(seen[ts[1]])[0])
-        ALT = (Math.random() < 0.5) ? [ts[0], ts[1]] : [ts[1], ts[0]];
-    }
-    const surfKeys = Object.keys(bySurf);
-    if(ALT){
-      // half the surfaces lead with one presentation and half with the other,
-      // so each round of five arrives already three-and-two rather than
-      // whatever five independent coin flips happened to give
-      const shuffled = surfKeys.slice().sort(()=>Math.random()-0.5);
-      LEADS = {};
-      shuffled.forEach((k, i)=>{
-        LEADS[k] = (i < Math.ceil(shuffled.length / 2)) ? ALT[0] : ALT[1]; });
-    }
-    const groups = surfKeys.map(k=>stratify(bySurf[k], LEADS ? LEADS[k] : null));
+    const groups = Object.values(bySurf).map(stratify);
     // Scenario spacing: items may tag their scenario as art_payload.ctx (e.g. the
     // cats-and-dogs table). Two items sharing a ctx should not land close
     // together, even when they come from different surfaces. Items with no ctx
@@ -3231,25 +3181,6 @@ const myFold = foldOf(round[k]);
           const tmp = g[at]; g[at] = g[swapAt]; g[swapAt] = tmp;
           round[k] = g[at];
         }
-      }
-      // deal the round out alternating, picking up the beat where the previous
-      // round left off — position 0 of the whole run takes ALT[0], and every
-      // question after it flips. Composition is untouched; only the order in
-      // which this round's items are handed over changes.
-      if(ALT){
-        const bin = {}; bin[ALT[0]] = []; bin[ALT[1]] = [];
-        round.forEach(it=>{ const t = tailOf(foldOf(it));
-                            (bin[t] = bin[t] || []).push(it); });
-        const seq = [];
-        let want = (mixed.length % 2 === 0) ? ALT[0] : ALT[1];
-        while(seq.length < round.length){
-          const other = (want === ALT[0]) ? ALT[1] : ALT[0];
-          const take = (bin[want] && bin[want].length) ? want : other;
-          if(!bin[take] || !bin[take].length) break;
-          seq.push(bin[take].shift());
-          want = (take === ALT[0]) ? ALT[1] : ALT[0];
-        }
-        if(seq.length === round.length){ round.length = 0; seq.forEach(x=>round.push(x)); }
       }
       round.forEach(it=>{
         const c = ctxOf(it);
