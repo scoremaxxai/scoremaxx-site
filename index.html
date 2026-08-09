@@ -960,6 +960,33 @@ function _linePt(p) {
     if (p.centre !== false)
       g.push('<circle cx="' + X(ch).toFixed(1) + '" cy="' + Y(ck).toFixed(1) + '" r="3.5" fill="#111"/>');
   }
+  // AN ELLIPSE, drawn true to the grid, on the same axes concept 65 draws its
+  // circles on — the two concepts are siblings and a student who learned to
+  // read a centre and a radius off that grid should not have to learn a new
+  // picture to read a centre and two radii off this one.
+  //
+  // True to the grid is the whole point here. The figure has to REPLACE the
+  // equation rather than sit beside it, so a and b are only recoverable if the
+  // curve really does cross the horizontal line through its centre a units
+  // out and the vertical line through it b units out. Nothing about this
+  // figure is stylised: the same scale factor drives both radii.
+  if (p.ellipse) {
+    var eh = p.ellipse[0], ek = p.ellipse[1], ea = p.ellipse[2], eb = p.ellipse[3];
+    g.push('<ellipse clip-path="url(#lpclip)" cx="' + X(eh).toFixed(1) + '" cy="' + Y(ek).toFixed(1) +
+           '" rx="' + (ea * sc).toFixed(1) + '" ry="' + (eb * sc).toFixed(1) +
+           '" fill="none" stroke="' + ART_STYLE.stroke + '" stroke-width="2"/>');
+    // the four axis ends, ticked so they can be counted off rather than
+    // eyeballed — but never labelled with their coordinates, which would hand
+    // over the answer on every surface that asks for one
+    if (p.ends !== false)
+      [[eh - ea, ek], [eh + ea, ek], [eh, ek - eb], [eh, ek + eb]].forEach(function (q) {
+        g.push('<circle cx="' + X(q[0]).toFixed(1) + '" cy="' + Y(q[1]).toFixed(1) +
+               '" r="2.6" fill="#111"/>');
+      });
+    if (p.centre !== false)
+      g.push('<circle cx="' + X(eh).toFixed(1) + '" cy="' + Y(ek).toFixed(1) +
+             '" r="3.5" fill="#111"/>');
+  }
   // p.ptags names what each marked point IS. Without it, "the centre is one of
   // the two points shown" is not a question — either point could be the
   // centre, and the two readings give different circles.
@@ -988,7 +1015,7 @@ function _linePt(p) {
              String(px).replace("-", "−") + ", " + String(py).replace("-", "−") + ")</text>");
     }
   }
-  var what = p.circle ? "a circle" : (p.line ? (p.point ? "a line and a point" : "a line") :
+  var what = p.ellipse ? "an ellipse" : p.circle ? "a circle" : (p.line ? (p.point ? "a line and a point" : "a line") :
               (p.points ? "some marked points" : "a point"));
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="coordinate plane showing ' +
          what + '">' + g.join("") + "</svg>";
@@ -3062,7 +3089,11 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
     // each variant separately and round-robin them. Items tag their variant as
     // art_payload.fold; untagged items fall back to a plain shuffle.
     const foldOf = it => { const p = it && it.art_payload; return (p && p.fold) || null; };
-    function stratify(g){
+    const headOf = s => { const i = String(s || '').indexOf('\u00b7');
+                          return i < 0 ? String(s || '') : s.slice(0, i).trim(); };
+    const tailOf = s => { const i = String(s || '').lastIndexOf('\u00b7');
+                          return i < 0 ? '' : s.slice(i + 1).trim(); };
+    function stratify(g, lead){
       const by = {}, order = [];
       g.forEach(it=>{ const f = foldOf(it) || '_'; if(!by[f]){ by[f] = []; order.push(f); } by[f].push(it); });
       if(order.length < 2) return g.sort(()=>Math.random()-0.5);
@@ -3074,15 +3105,18 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
       // items of a surface land on the same sub-form, which shows up in any
       // ten-question run. Tags without a "\u00b7" are untouched, so older
       // concepts behave exactly as before.
-      const headOf = s => { const i = String(s || '').indexOf('\u00b7');
-                            return i < 0 ? String(s || '') : s.slice(0, i).trim(); };
-      const tailOf = s => { const i = String(s || '').lastIndexOf('\u00b7');
-                            return i < 0 ? '' : s.slice(i + 1).trim(); };
       const tails = [], heads = [];
       order.forEach(k=>{
         const t = tailOf(k); if(tails.indexOf(t) < 0) tails.push(t);
         const h = headOf(k); if(heads.indexOf(h) < 0) heads.push(h);
       });
+      // The caller may pin which presentation this surface LEADS with. Each
+      // surface alternates on its own already; what it cannot know alone is
+      // what the other four are doing, so a run can still come out five of one
+      // kind then five of the other. Pinning the leads makes the whole round
+      // predictable, which is what lets the round builder below alternate
+      // question by question.
+      if(lead && tails.length === 2 && tails[0] !== lead) tails.reverse();
       if(tails.length > 1){
         const woven = [];
         if(heads.length > 1 && order.length === tails.length * heads.length){
@@ -3111,7 +3145,50 @@ async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
       }
       return out;
     }
-    const groups = Object.values(bySurf).map(stratify);
+    // STRICT ALTERNATION of the presentation dimension. Where the second half
+    // of the fold is what the item LOOKS like — a histogram or the same data
+    // written out, a figure on a grid or the same ellipse in symbols — a
+    // student should meet them one and one. Simulated over 4000 sessions the
+    // plain round-robin flipped presentation on only 51% of consecutive
+    // questions and served five of a kind in a row in 11% of ten-question sets.
+    //
+    // THIS ONLY APPLIES WHEN THE TAIL IS REALLY PRESENTATIONAL, and the test is
+    // structural rather than by name: the tail has to decide whether the item
+    // carries a figure. That distinction matters. On concept 70 the second
+    // dimension is "the mean holds still / the mean moves" — a CONCEPTUAL fold
+    // that is frequently the answer itself, and strictly alternating it would
+    // hand the answer to anyone who noticed the pattern. Concepts like that
+    // fail the test and are left exactly as they were.
+    const hasArt = it => { const p = it && it.art_payload;
+                           return (p && (p.kind || p.type)) ? '1' : '0'; };
+    let ALT = null, LEADS = null;
+    {
+      const seen = {};
+      let tagged = true;
+      items.forEach(it=>{
+        const f = foldOf(it);
+        if(!f || f.indexOf('\u00b7') < 0){ tagged = false; return; }
+        const t = tailOf(f);
+        (seen[t] = seen[t] || {})[hasArt(it)] = 1;
+      });
+      const ts = Object.keys(seen);
+      if(tagged && ts.length === 2
+         && Object.keys(seen[ts[0]]).length === 1
+         && Object.keys(seen[ts[1]]).length === 1
+         && Object.keys(seen[ts[0]])[0] !== Object.keys(seen[ts[1]])[0])
+        ALT = (Math.random() < 0.5) ? [ts[0], ts[1]] : [ts[1], ts[0]];
+    }
+    const surfKeys = Object.keys(bySurf);
+    if(ALT){
+      // half the surfaces lead with one presentation and half with the other,
+      // so each round of five arrives already three-and-two rather than
+      // whatever five independent coin flips happened to give
+      const shuffled = surfKeys.slice().sort(()=>Math.random()-0.5);
+      LEADS = {};
+      shuffled.forEach((k, i)=>{
+        LEADS[k] = (i < Math.ceil(shuffled.length / 2)) ? ALT[0] : ALT[1]; });
+    }
+    const groups = surfKeys.map(k=>stratify(bySurf[k], LEADS ? LEADS[k] : null));
     // Scenario spacing: items may tag their scenario as art_payload.ctx (e.g. the
     // cats-and-dogs table). Two items sharing a ctx should not land close
     // together, even when they come from different surfaces. Items with no ctx
@@ -3154,6 +3231,25 @@ const myFold = foldOf(round[k]);
           const tmp = g[at]; g[at] = g[swapAt]; g[swapAt] = tmp;
           round[k] = g[at];
         }
+      }
+      // deal the round out alternating, picking up the beat where the previous
+      // round left off — position 0 of the whole run takes ALT[0], and every
+      // question after it flips. Composition is untouched; only the order in
+      // which this round's items are handed over changes.
+      if(ALT){
+        const bin = {}; bin[ALT[0]] = []; bin[ALT[1]] = [];
+        round.forEach(it=>{ const t = tailOf(foldOf(it));
+                            (bin[t] = bin[t] || []).push(it); });
+        const seq = [];
+        let want = (mixed.length % 2 === 0) ? ALT[0] : ALT[1];
+        while(seq.length < round.length){
+          const other = (want === ALT[0]) ? ALT[1] : ALT[0];
+          const take = (bin[want] && bin[want].length) ? want : other;
+          if(!bin[take] || !bin[take].length) break;
+          seq.push(bin[take].shift());
+          want = (take === ALT[0]) ? ALT[1] : ALT[0];
+        }
+        if(seq.length === round.length){ round.length = 0; seq.forEach(x=>round.push(x)); }
       }
       round.forEach(it=>{
         const c = ctxOf(it);
@@ -3614,6 +3710,21 @@ const WORKED = {
       'Check it against the other four names. Uniform? No \u2014 6, 7 and 8 are far more common than the rest. Normal? No \u2014 it does not fall away evenly on both sides. Bimodal? No \u2014 there is one hump, not two humps with a dip between them.'
     ],
     check: 'Look at what just happened: the crowd is on the right and the name says left. That mismatch IS the question \u2014 it is why this gets asked at all, and naming the shape by where the crowd sits gets it backwards every single time. Say the rule out loud when you see one. Two more things to watch. Bimodal needs two genuine humps with a real dip between them; two values that happen to tie for most common in a short list is not bimodal, and a flat-ish top is not a dip. And if you ever need to check a skew with arithmetic rather than by eye, the long tail drags the MEAN towards it: here the mean is 6.495 and the median is 7, and the mean sitting below the median is the tail pulling it left.'
+  },
+  72: {
+    label: 'Show a worked example',
+    title: 'Find the endpoints of the major axis of the ellipse (x + 2)\u00b2/16 + (y \u2212 5)\u00b2/49 = 1.',
+    steps: [
+      'Three steps, in this order every time: centre, then radii, then which one is major. Do not try to see it all at once.',
+      'CENTRE. The x-part is (x + 2). The pattern has a minus already built into it, so read (x + 2) as (x \u2212 (\u22122)) and h = \u22122. The y-part is (y \u2212 5) straight away, so k = 5. The centre is (\u22122, 5).',
+      'RADII. Under the x-term is 16. The equation stores the radius SQUARED, exactly as a circle\u2019s does \u2014 so take the square root: \u221A16 = 4. It reaches 4 units left and right.',
+      'Under the y-term is 49, and \u221A49 = 7. It reaches 7 units up and down.',
+      'WHICH IS MAJOR? 7 beats 4, so the long way is the up-and-down one. The major axis is vertical, and its ends sit 7 above and 7 below the centre.',
+      'From (\u22122, 5) go up 7: 5 + 7 = 12, giving (\u22122, 12). Go down 7: 5 \u2212 7 = \u22122, giving (\u22122, \u22122).',
+      'The endpoints are (\u22122, 12) and (\u22122, \u22122).',
+      'Check one of them rather than trusting it. Put (\u22122, 12) into the equation: the x-part is (\u22122 + 2)\u00b2/16 = 0, and the y-part is (12 \u2212 5)\u00b2/49 = 49/49 = 1. Together they make 1, which is what the equation asks for. The point is on the ellipse.'
+    ],
+    check: 'Two traps, and the test offers both as choices every time. The first is answering 49 instead of 7 \u2014 the number sitting under the term is the radius squared, never the radius, so the square root is not optional. The second is assuming the x-term owns the long axis; it does not. The major axis belongs to whichever number is bigger, wherever it happens to sit, and here that is the one under y. Beyond those two there is nothing to memorise: under x is across, under y is up and down, and you have to take the square root.'
   }
 };
 function conceptOfPQ(){
