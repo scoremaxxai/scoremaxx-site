@@ -3045,16 +3045,19 @@ var SUBBANKS = {
   ]
 };
 
-async function startConceptPractice(conceptNo, skillKey, mode, subRecipe){
+async function startConceptPractice(conceptNo, skillKey, mode, subRecipe, section){
+  section = section || 'math';
+  const T_ITEMS = section === 'english' ? 'english_items' : 'math_items';
+  const T_RECIPES = section === 'english' ? 'english_recipes' : 'math_recipes';
   let items = null;
   try{
-    const {data} = await db.from('math_items').select('*').eq('concept_no', conceptNo).eq('is_servable', true);
+    const {data} = await db.from(T_ITEMS).select('*').eq('concept_no', conceptNo).eq('is_servable', true);
     items = data;
   }catch(_){ items = null; }
   if(!items || !items.length) return false;
   let label = skillKey;
   try{
-    const {data:r} = await db.from('math_recipes').select('concept_name').eq('concept_no', conceptNo).limit(1).maybeSingle();
+    const {data:r} = await db.from(T_RECIPES).select('concept_name').eq('concept_no', conceptNo).limit(1).maybeSingle();
     if(r && r.concept_name) label = r.concept_name;
   }catch(_){}
   // sub-bank picker: grouped topics (e.g. all shifts together), or everything
@@ -3294,7 +3297,7 @@ const myFold = foldOf(round[k]);
     sessionId = sess ? sess.id : null;
   }catch(_){}
   const target = mode==='careless' ? Math.min(6, pool.length) : Math.min(10, pool.length);
-  PR = {skill:skillKey, skillLabel:label, mode, pool, idx:0, target, rec:[], cur:null, curAnswer:null, pending:null, awaitConf:false, streak:0, best:0, qLimit:0, qRemaining:0, qTimerId:null, sessionId, newBank:true};
+  PR = {skill:skillKey, skillLabel:label, mode, pool, idx:0, target, rec:[], cur:null, curAnswer:null, pending:null, awaitConf:false, streak:0, best:0, qLimit:0, qRemaining:0, qTimerId:null, sessionId, newBank:true, section};
   advancePQ();
   return true;
 }
@@ -3328,6 +3331,21 @@ const WORKED = {
       'Read it off the picture to be sure. From (2, \u22123), go 4 to the right and 8 up and you land on (6, 5). Up 8 for every 4 across is 2 up for every 1 across \u2014 slope 2.'
     ],
     check: 'Two traps, and the test offers both every time. MIXING THE ORDERS \u2014 (\u22123 \u2212 5) on top but (6 \u2212 2) underneath \u2014 gives \u22128/4 = \u22122, which is exactly the right answer with the wrong sign, and looks completely reasonable on the page. RUN OVER RISE gives 4/8 = 1/2. Both will be sitting there among your four choices. Before you divide, say out loud which number is the rise. And two special cases worth knowing cold: if the two y-values are the SAME the line is horizontal and the slope is 0, because the rise is 0 and 0 divided by anything is 0. If the two x-values are the same the line is vertical and there is NO slope \u2014 undefined, not zero, not a very large number \u2014 because you cannot divide by 0. Those two get mixed up constantly, and they are opposites.'
+  },
+  e1: {
+    label: 'Show a worked example',
+    title: '"Which choice most specifically describes the sound of the machine?" \u2014 The old printing press in the basement [ran all afternoon].',
+    steps: [
+      'A. NO CHANGE \u00b7 B. made quite a racket all afternoon \u00b7 C. clanked and hissed all afternoon \u00b7 D. was impressively loud all afternoon',
+      'All four are fine grammar. Nobody is testing your commas here. The stem names the job \u2014 SOUND \u2014 and you hire the one choice that does that exact job.',
+      'A never mentions sound at all. Grammatically fine, and it ignores the assignment.',
+      'B tells you there WAS noise \u2014 "quite a racket" \u2014 but not one thing you could actually hear. Naming the category is not delivering it.',
+      'D tells you how LOUD it was. Volume is a measurement, not a sound. Still nothing to hear.',
+      'C gives you clanking and hissing \u2014 noises. That is the only choice where sound actually reaches your ear. The answer is C.',
+      'Harder \u2014 two jobs at once: "Which choice best concludes the paragraph and emphasizes how long the repair took?" We tightened the last bolt, and by then [the job was over]. \u00b7 F. NO CHANGE \u00b7 G. we were finally done with it \u00b7 H. the sun had set twice since we started \u00b7 J. the repair had certainly taken a while.',
+      'All four conclude. Only H makes you FEEL the time \u2014 the sun went down twice. J says "a while," which is time you cannot picture. The answer is H.'
+    ],
+    check: 'The trap on every one of these is the choice that sounds nicest instead of the one that does the named job \u2014 that is exactly how you land on J. There is always one pretty, vague option sitting there waiting. Read the stem like a hiring notice: it names the welder it wants. Concrete beats elegant, every single time.'
   },
   42: {
     label: 'Show a worked example',
@@ -3745,8 +3763,11 @@ const WORKED = {
   }
 };
 function conceptOfPQ(){
-  const m = String((PR && PR.skill) || '').match(/^concept:(\d+)$/);
-  return m ? parseInt(m[1], 10) : null;
+  const s = String((PR && PR.skill) || '');
+  let m = s.match(/^concept:(\d+)$/);
+  if(m) return parseInt(m[1], 10);
+  m = s.match(/^english:(\d+)$/);
+  return m ? 'e' + m[1] : null;   // english worked examples key as 'e1', 'e2'…
 }
 function toggleWorked(){
   const el = document.getElementById('worked-body');
@@ -3796,6 +3817,11 @@ async function startPractice(skill, mode){
   let topic = skill, conceptNo = null;
   const cmMatch = String(skill).match(/^concept:(\d+)$/);
   if(cmMatch) conceptNo = parseInt(cmMatch[1],10);
+  // English concepts live in their own tables; same dealer, different shelf
+  const emMatch = String(skill).match(/^english:(\d+)$/);
+  if(emMatch){
+    if(await startConceptPractice(parseInt(emMatch[1],10), origSkill, mode, undefined, 'english')) return;
+  }
   try{
     const {data:m} = await db.from('skill_drill_map').select('*').eq('skill', skill).maybeSingle();
     if(m && m.drill_topic) topic = m.drill_topic;
@@ -3848,7 +3874,7 @@ function pqTick(){
     PR.streak = 0;
     PR.rec.push({q:PR.cur, answer:null, correct:false, timeout:true, time:PR.qLimit});
     if(PR.sessionId && !PR.newBank) db.from('practice_attempts').insert({session_id:PR.sessionId, question_id:PR.cur.id, position:PR.rec.length, answer:null, correct:false}).then(()=>{});
-    if(PR.newBank) db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{});
+    if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
     renderPQ();
   }
 }
@@ -3959,7 +3985,7 @@ function commitP(L, conf){
   if(PR.newBank && !correct && PR.cur._rats && PR.cur._rats[L]) PR.cur.misconception = PR.cur._rats[L];
   PR.rec.push({q:PR.cur, answer:L, correct, conf:conf||null, time: PR.mode==='timing' ? (PR.qLimit - PR.qRemaining) : null});
   if(PR.sessionId && !PR.newBank) db.from('practice_attempts').insert({session_id:PR.sessionId, question_id:PR.cur.id, position:PR.rec.length, answer:L, correct}).then(()=>{});
-  if(PR.newBank) db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{});
+  if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
   renderPQ();
 }
 // record a study-plan day's drill result. pct = accuracy (color-coded % under gem); met = did they
@@ -4680,6 +4706,7 @@ function openLearn(skill){
 // for that job: it stars a 0.2-per-test concept while the catalogue's four
 // most frequent go unstarred.
 let LIB = null, LIBV = null, LIB_STARS = null, LIB_DB_STARS = false;
+let ELIB = null, ELIVE = null;    // english catalogue + which concepts have banks
 const LIB_CATS = ['Number & Quantity','Algebra','Functions','Geometry',
                   'Statistics & Probability','Integrating Essential Skills'];
 const LIB_CODE = {NUM:'Number & Quantity',ALG:'Algebra',FUN:'Functions',GEO:'Geometry',
@@ -4716,40 +4743,58 @@ async function libLoad(){
     const up = {}; (sh||[]).forEach(x=>{ if(x.video_url) up[x.shoot_no]=true; });
     LIBV = {}; (cv||[]).forEach(x=>{ if(up[x.shoot_no]) LIBV[x.concept_id]=true; });
   }catch(_){ LIBV = null; }
-  // the student's own stars: the table when it exists, localStorage otherwise
+  // the English catalogue and which of its concepts have live banks
+  try{
+    const {data} = await db.from('concepts')
+      .select('concept_id,concept_no,name,category,q_per_form')
+      .eq('section','english').order('concept_no');
+    ELIB = data || [];
+  }catch(_){ ELIB = []; }
+  try{
+    const {data} = await db.from('english_recipes').select('concept_no');
+    ELIVE = new Set((data||[]).map(r=>r.concept_no));
+  }catch(_){ ELIVE = new Set(); }
+  // the student's own stars: the table when it exists, localStorage otherwise.
+  // Keys are section-qualified ('math:5', 'english:1') because concept numbers
+  // repeat across sections.
   LIB_STARS = new Set(); LIB_DB_STARS = false;
   try{
     if(ME && ME.id){
       const {data, error} = await db.from('concept_stars')
-        .select('concept_no').eq('student_id', ME.id);
-      if(!error && data){ LIB_DB_STARS = true; data.forEach(r=>LIB_STARS.add(r.concept_no)); }
+        .select('concept_no,section').eq('student_id', ME.id);
+      if(!error && data){
+        LIB_DB_STARS = true;
+        data.forEach(r=>LIB_STARS.add((r.section||'math')+':'+r.concept_no));
+      }
     }
   }catch(_){}
   if(!LIB_DB_STARS){
-    try{ JSON.parse(localStorage.getItem(libLsKey())||'[]').forEach(n=>LIB_STARS.add(n)); }catch(_){}
+    try{ JSON.parse(localStorage.getItem(libLsKey())||'[]').forEach(n=>LIB_STARS.add(String(n).indexOf(':')<0 ? 'math:'+n : n)); }catch(_){}
   }
   return LIB;
 }
 function libSort(a,b){
-  const sa=LIB_STARS.has(a.concept_no)?1:0, sb=LIB_STARS.has(b.concept_no)?1:0;
+  const sa=LIB_STARS.has('math:'+a.concept_no)?1:0, sb=LIB_STARS.has('math:'+b.concept_no)?1:0;
   if(sb!==sa) return sb-sa;
   const qa=a.q_per_form==null?-1:+a.q_per_form, qb=b.q_per_form==null?-1:+b.q_per_form;
   if(qb!==qa) return qb-qa;
   return a.concept_no-b.concept_no;
 }
-async function libToggleStar(no, ev){
+async function libToggleStar(no, ev, section){
   if(ev) ev.stopPropagation();
   if(!LIB_STARS) return;
-  const on = !LIB_STARS.has(no);
-  if(on) LIB_STARS.add(no); else LIB_STARS.delete(no);
+  section = section || 'math';
+  const key = section + ':' + no;
+  const on = !LIB_STARS.has(key);
+  if(on) LIB_STARS.add(key); else LIB_STARS.delete(key);
   // localStorage always, so the star works before the table exists and the
   // device keeps a copy either way
   try{ localStorage.setItem(libLsKey(), JSON.stringify(Array.from(LIB_STARS))); }catch(_){}
   if(LIB_DB_STARS && ME && ME.id){
     try{
-      if(on) await db.from('concept_stars').upsert({student_id:ME.id, concept_no:no});
+      if(on) await db.from('concept_stars').upsert({student_id:ME.id, concept_no:no, section});
       else   await db.from('concept_stars').delete()
-                     .eq('student_id',ME.id).eq('concept_no',no);
+                     .eq('student_id',ME.id).eq('concept_no',no).eq('section',section);
     }catch(_){}
   }
   // re-render so the pin takes its place at the top; keep whatever the
@@ -4779,7 +4824,7 @@ async function renderLibrary(){
        + ' <span class="dim" style="font-weight:400;font-size:13px">· '+list.length+' concept'+(list.length===1?'':'s')+'</span></h2>';
     list.forEach(r=>{
       const vid = LIBV && r.concept_id && LIBV[r.concept_id];
-      const on = LIB_STARS.has(r.concept_no);
+      const on = LIB_STARS.has('math:'+r.concept_no);
       h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no).toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)">'
         + '<span onclick="libToggleStar('+r.concept_no+',event)" title="'+(on?'Unpin this concept':'Pin this concept to the top of its group')+'"'
         + ' style="cursor:pointer;flex:none;font-size:19px;line-height:1;width:28px;text-align:center;'
@@ -4795,7 +4840,46 @@ async function renderLibrary(){
     });
     h += '</div>';
   });
+  // ── English ── ranked 1..28 by measured frequency; banks light up as
+  // they ship. Only concepts with a live bank get buttons.
+  if(ELIB && ELIB.length){
+    const CATSHORT = {'Conventions of Standard English':'Conventions',
+                      'Production of Writing':'Production',
+                      'Knowledge of Language':'Knowledge of Language'};
+    h += '<div class="card lib-cat" data-cat="en"><h2 style="font-size:16px">English'
+       + ' <span class="dim" style="font-weight:400;font-size:13px">· '+ELIB.length
+       + ' concepts · ranked by how often the test asks them</span></h2>';
+    ELIB.forEach(r=>{
+      const live = ELIVE && ELIVE.has(r.concept_no);
+      const on = LIB_STARS.has('english:'+r.concept_no);
+      h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no+' english').toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)'+(live?'':';opacity:.55')+'">'
+        + '<span onclick="libToggleStar('+r.concept_no+',event,\'english\')" title="'+(on?'Unpin':'Pin to the top')+'"'
+        + ' style="cursor:pointer;flex:none;font-size:19px;line-height:1;width:28px;text-align:center;'
+        + (on?'color:#eab308':'color:#4a5266')+'">'+(on?'★':'☆')+'</span>'
+        + '<div style="flex:1;min-width:0"><b>'+esc(r.name)+'</b>'
+        + '<div class="dim" style="font-size:12.5px;margin-top:2px">Concept '+r.concept_no
+        + (r.q_per_form!=null?' · ~'+(+r.q_per_form).toFixed(1)+' per test':'')
+        + ' · '+esc(CATSHORT[r.category]||r.category)
+        + '</div></div>'
+        + (live
+           ? '<button class="btn2" style="flex:none" onclick="openEnglishLearn('+r.concept_no+',\''+esc(String(r.name).replace(/'/g,'\\\''))+'\')">▶ Learn</button>'
+             + '<button class="btn" style="flex:none" onclick="startPractice(\'english:'+r.concept_no+'\',\'content\')">Practice →</button>'
+           : '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">coming soon</span>')
+        + '</div>';
+    });
+    h += '</div>';
+  }
   el.innerHTML = h;
+}
+async function openEnglishLearn(no, name){
+  // English lessons are not filmed yet — the overlay says so honestly and
+  // still hands the student straight into practice
+  let ov=document.getElementById('learn-overlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='learn-overlay'; ov.style.cssText='position:fixed;inset:0;z-index:85;background:rgba(5,6,9,.78);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif'; ov.onclick=e=>{ if(e.target===ov) ov.remove(); }; document.body.appendChild(ov); }
+  ov.innerHTML='<div style="width:min(680px,96vw);background:#14161d;border:1px solid #2c303c;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.6)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px 10px"><h2 style="font-size:18px;font-weight:800;color:#eef0f5">Learn · '+esc(name)+'</h2><span onclick="document.getElementById(\'learn-overlay\').remove()" style="cursor:pointer;color:#9aa0ae;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #23262f;border-radius:9px">✕</span></div>'
+    +'<div style="padding:0 22px 18px"><div style="background:#0f1219;border:1px dashed #2c303c;border-radius:12px;padding:36px 18px;text-align:center;color:#8b96ad"><div style="font-size:34px;margin-bottom:8px">📺</div><b style="color:#eef0f5">Lesson video coming soon</b><br><span style="font-size:13px">Our tutors are filming the '+esc(name)+' lesson. The practice bank is live — and every question opens a worked example.</span></div></div>'
+    +'<div style="padding:0 22px 20px"><button onclick="document.getElementById(\'learn-overlay\').remove();startPractice(\'english:'+no+'\',\'content\')" style="width:100%;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:12px;padding:13px;cursor:pointer">Now practice this →</button></div></div>';
 }
 function libFilter(q){
   q = String(q||'').trim().toLowerCase();
