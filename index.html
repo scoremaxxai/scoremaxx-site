@@ -4707,6 +4707,7 @@ function openLearn(skill){
 // most frequent go unstarred.
 let LIB = null, LIBV = null, LIB_STARS = null, LIB_DB_STARS = false;
 let ELIB = null, ELIVE = null;    // english catalogue + which concepts have banks
+let LIB_SEC = 'math';             // which section tab is open
 const LIB_CATS = ['Number & Quantity','Algebra','Functions','Geometry',
                   'Statistics & Probability','Integrating Essential Skills'];
 const LIB_CODE = {NUM:'Number & Quantity',ALG:'Algebra',FUN:'Functions',GEO:'Geometry',
@@ -4815,9 +4816,18 @@ async function renderLibrary(){
   const by = {};
   rows.forEach(r=>{ (by[r.category]=by[r.category]||[]).push(r); });
   const cats = LIB_CATS.filter(c=>by[c]).concat(Object.keys(by).filter(c=>LIB_CATS.indexOf(c)<0));
+  const SECS = [['math','Math'],['english','English'],['reading','Reading'],['science','Science']];
   let h = '<div class="card"><h2>Practice</h2>'
-    +'<p class="dim">Every math concept on the ACT, grouped the way the test reports them, most-tested first. Tap the ☆ to pin a concept to the top of its group — your pins are saved to your account. Watch the lesson, then practice it.</p>'
-    +'<input id="libq" placeholder="Search concepts…" oninput="libFilter(this.value)" style="width:100%;max-width:420px;margin-top:6px;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:rgba(10,14,24,.5);color:inherit;font-size:14.5px;outline:none"></div>';
+    +'<p class="dim">Every concept on the ACT, section by section, most-tested first. Tap the ☆ to pin a concept to the top of its group — your pins are saved to your account. Watch the lesson, then practice it.</p>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'
+    + SECS.map(([k,lab])=>{
+        const on = LIB_SEC===k;
+        return '<button onclick="libShowSection(\''+k+'\')" style="padding:9px 22px;border-radius:11px;font-weight:700;font-size:14.5px;cursor:pointer;border:1px solid '
+          +(on?'#8b5cf6':'var(--line)')+';background:'+(on?'#8b5cf6':'rgba(10,14,24,.5)')+';color:'+(on?'#fff':'inherit')+'">'+lab+'</button>';
+      }).join('')
+    +'</div>'
+    +'<input id="libq" placeholder="Search concepts…" oninput="libFilter(this.value)" style="width:100%;max-width:420px;margin-top:12px;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:rgba(10,14,24,.5);color:inherit;font-size:14.5px;outline:none"></div>';
+  h += '<div class="lib-sec" data-sec="math" style="'+(LIB_SEC==='math'?'':'display:none')+'">';
   cats.forEach((cat,ci)=>{
     const list = by[cat].slice().sort(libSort);
     h += '<div class="card lib-cat" data-cat="'+ci+'"><h2 style="font-size:16px">'+esc(cat)
@@ -4840,8 +4850,10 @@ async function renderLibrary(){
     });
     h += '</div>';
   });
+  h += '</div>';
   // ── English ── ranked 1..28 by measured frequency; banks light up as
   // they ship. Only concepts with a live bank get buttons.
+  h += '<div class="lib-sec" data-sec="english" style="'+(LIB_SEC==='english'?'':'display:none')+'">';
   if(ELIB && ELIB.length){
     const CATSHORT = {'Conventions of Standard English':'Conventions',
                       'Production of Writing':'Production',
@@ -4849,7 +4861,12 @@ async function renderLibrary(){
     h += '<div class="card lib-cat" data-cat="en"><h2 style="font-size:16px">English'
        + ' <span class="dim" style="font-weight:400;font-size:13px">· '+ELIB.length
        + ' concepts · ranked by how often the test asks them</span></h2>';
-    ELIB.forEach(r=>{
+    const elist = ELIB.slice().sort((a,b)=>{
+      const sa=LIB_STARS.has('english:'+a.concept_no)?1:0, sb=LIB_STARS.has('english:'+b.concept_no)?1:0;
+      if(sb!==sa) return sb-sa;
+      return a.concept_no-b.concept_no;
+    });
+    elist.forEach(r=>{
       const live = ELIVE && ELIVE.has(r.concept_no);
       const on = LIB_STARS.has('english:'+r.concept_no);
       h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no+' english').toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)'+(live?'':';opacity:.55')+'">'
@@ -4868,8 +4885,37 @@ async function renderLibrary(){
         + '</div>';
     });
     h += '</div>';
+  } else {
+    h += '<div class="card"><h2 style="font-size:16px">English</h2><p class="dim">The English concept list is being loaded — check back in a moment.</p></div>';
   }
+  h += '</div>';
+  // ── Reading and Science ── the concept research is underway; the shelves
+  // exist so the room is visibly being built
+  [['reading','Reading','36 questions · 4 passages'],
+   ['science','Science','40 questions · 6 passages']].forEach(([k,lab,shape])=>{
+    h += '<div class="lib-sec" data-sec="'+k+'" style="'+(LIB_SEC===k?'':'display:none')+'">'
+      +'<div class="card"><h2 style="font-size:16px">'+lab+'</h2>'
+      +'<p class="dim">'+shape+' on the enhanced ACT. The '+lab+' concept list is still being researched from real forms — practice banks land here the same way Math and English did: most-tested concepts first.</p>'
+      +'<span class="dim" style="font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px;display:inline-block">coming soon</span></div></div>';
+  });
   el.innerHTML = h;
+}
+function libShowSection(sec){
+  LIB_SEC = sec;
+  document.querySelectorAll('#v-library .lib-sec').forEach(d=>{
+    d.style.display = d.getAttribute('data-sec')===sec ? '' : 'none'; });
+  // repaint the tab row without a full re-render
+  const card = document.querySelector('#v-library .card');
+  if(card){
+    card.querySelectorAll('button').forEach(b=>{
+      const on = b.getAttribute('onclick').indexOf("'"+sec+"'")>=0;
+      b.style.borderColor = on ? '#8b5cf6' : 'var(--line)';
+      b.style.background = on ? '#8b5cf6' : 'rgba(10,14,24,.5)';
+      b.style.color = on ? '#fff' : 'inherit';
+    });
+  }
+  const q = document.getElementById('libq');
+  if(q && q.value) libFilter(q.value);
 }
 async function openEnglishLearn(no, name){
   // English lessons are not filmed yet — the overlay says so honestly and
