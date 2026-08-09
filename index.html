@@ -2322,8 +2322,8 @@ function renderNav(){
     el.innerHTML = viewToggleBtn()+'<button class="btn2 nav-red" onclick="signOut()">Sign out</button>';
     return;
   }
-  let h = viewToggleBtn()+'<button class="btn2 nav-blue" onclick="renderHome().then(()=>go(\'home\'))">Dashboard</button> <button class="btn2 nav-yellow" onclick="renderPlans()">Study Plan</button>' + ' <button class="btn2 nav-purple" onclick="renderLibrary().then(()=>go(\'library\'))">Practice</button>';
-  if(ME.role==='tutor'||ME.role==='admin') h += ' <button class="btn2 nav-green" onclick="renderTutor()">Tutor View</button>';
+  let h = viewToggleBtn()+'<button class="btn2 nav-blue" onclick="renderHome().then(()=>go(\'home\'))">Dashboard</button> <button class="btn2 nav-yellow" onclick="renderPlans()">Study Plan</button>' + ' <button class="btn2 nav-green" onclick="renderLibrary().then(()=>go(\'library\'))">Practice</button>';
+  if(ME.role==='tutor'||ME.role==='admin') h += ' <button class="btn2 nav-purple" onclick="renderTutor()">Tutor View</button>';
   else if(ME.subscription_status==='active') h += ' <button class="btn2" onclick="openBilling(this)">Billing</button>';
   h += ' <button class="btn2 nav-red" onclick="signOut()">Sign out</button>';
   el.innerHTML = h;
@@ -4669,17 +4669,28 @@ function openLearn(skill){
 // exact second its chapter starts at — so one long filmed session serves many
 // concepts, each opening at its own moment. A concept whose shoot has no
 // uploaded video yet gets the same "coming soon" card the daily Learn uses.
-let LIB = null, LIBV = null;
+//
+// THE STAR IS THE STUDENT'S, not the catalogue's. Tap it to pin a concept to
+// the top of its category; tap again to unpin. Pins live in concept_stars so
+// they follow the student across devices, mirrored to localStorage so the
+// button still works (per device) if that table has not been created yet.
+// The catalogue's own is_starred column is deliberately NOT shown here — it
+// records which concepts were verified on all four captured forms, a research
+// flag that reads as "study me first" when a student sees it, and it is wrong
+// for that job: it stars a 0.2-per-test concept while the catalogue's four
+// most frequent go unstarred.
+let LIB = null, LIBV = null, LIB_STARS = null, LIB_DB_STARS = false;
 const LIB_CATS = ['Number & Quantity','Algebra','Functions','Geometry',
                   'Statistics & Probability','Integrating Essential Skills'];
 const LIB_CODE = {NUM:'Number & Quantity',ALG:'Algebra',FUN:'Functions',GEO:'Geometry',
                   STAT:'Statistics & Probability',IES:'Integrating Essential Skills'};
+function libLsKey(){ return 'sm_stars_' + ((ME && ME.id) || 'anon'); }
 async function libLoad(){
   if(LIB) return LIB;
   let rows = null;
   try{
     const {data} = await db.from('concepts')
-      .select('concept_id,concept_no,name,category,q_per_form,is_starred')
+      .select('concept_id,concept_no,name,category,q_per_form')
       .eq('section','math').order('concept_no');
     if(data && data.length) rows = data;
   }catch(_){}
@@ -4691,7 +4702,7 @@ async function libLoad(){
       const seen = {};
       (data||[]).forEach(r=>{ if(!seen[r.concept_no]) seen[r.concept_no] =
         {concept_no:r.concept_no, name:r.concept_name,
-         category:LIB_CODE[r.category]||r.category, q_per_form:null, is_starred:false}; });
+         category:LIB_CODE[r.category]||r.category, q_per_form:null}; });
       rows = Object.values(seen);
     }catch(_){ rows = []; }
   }
@@ -4705,14 +4716,48 @@ async function libLoad(){
     const up = {}; (sh||[]).forEach(x=>{ if(x.video_url) up[x.shoot_no]=true; });
     LIBV = {}; (cv||[]).forEach(x=>{ if(up[x.shoot_no]) LIBV[x.concept_id]=true; });
   }catch(_){ LIBV = null; }
+  // the student's own stars: the table when it exists, localStorage otherwise
+  LIB_STARS = new Set(); LIB_DB_STARS = false;
+  try{
+    if(ME && ME.id){
+      const {data, error} = await db.from('concept_stars')
+        .select('concept_no').eq('student_id', ME.id);
+      if(!error && data){ LIB_DB_STARS = true; data.forEach(r=>LIB_STARS.add(r.concept_no)); }
+    }
+  }catch(_){}
+  if(!LIB_DB_STARS){
+    try{ JSON.parse(localStorage.getItem(libLsKey())||'[]').forEach(n=>LIB_STARS.add(n)); }catch(_){}
+  }
   return LIB;
 }
 function libSort(a,b){
-  const sa=a.is_starred?1:0, sb=b.is_starred?1:0;
+  const sa=LIB_STARS.has(a.concept_no)?1:0, sb=LIB_STARS.has(b.concept_no)?1:0;
   if(sb!==sa) return sb-sa;
   const qa=a.q_per_form==null?-1:+a.q_per_form, qb=b.q_per_form==null?-1:+b.q_per_form;
   if(qb!==qa) return qb-qa;
   return a.concept_no-b.concept_no;
+}
+async function libToggleStar(no, ev){
+  if(ev) ev.stopPropagation();
+  if(!LIB_STARS) return;
+  const on = !LIB_STARS.has(no);
+  if(on) LIB_STARS.add(no); else LIB_STARS.delete(no);
+  // localStorage always, so the star works before the table exists and the
+  // device keeps a copy either way
+  try{ localStorage.setItem(libLsKey(), JSON.stringify(Array.from(LIB_STARS))); }catch(_){}
+  if(LIB_DB_STARS && ME && ME.id){
+    try{
+      if(on) await db.from('concept_stars').upsert({student_id:ME.id, concept_no:no});
+      else   await db.from('concept_stars').delete()
+                     .eq('student_id',ME.id).eq('concept_no',no);
+    }catch(_){}
+  }
+  // re-render so the pin takes its place at the top; keep whatever the
+  // student had typed in the search box
+  const q = (document.getElementById('libq')||{}).value || '';
+  await renderLibrary();
+  const box = document.getElementById('libq');
+  if(box && q){ box.value = q; libFilter(q); }
 }
 async function renderLibrary(){
   const el = document.getElementById('v-library');
@@ -4726,23 +4771,26 @@ async function renderLibrary(){
   rows.forEach(r=>{ (by[r.category]=by[r.category]||[]).push(r); });
   const cats = LIB_CATS.filter(c=>by[c]).concat(Object.keys(by).filter(c=>LIB_CATS.indexOf(c)<0));
   let h = '<div class="card"><h2>Practice</h2>'
-    +'<p class="dim">Every math concept on the ACT, grouped the way the test reports them. The most-tested concepts sit at the top of each group — \u2605 marks the ones that show up on effectively every form. Watch the lesson, then practice it.</p>'
-    +'<input id="libq" placeholder="Search concepts\u2026" oninput="libFilter(this.value)" style="width:100%;max-width:420px;margin-top:6px;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:rgba(10,14,24,.5);color:inherit;font-size:14.5px;outline:none"></div>';
+    +'<p class="dim">Every math concept on the ACT, grouped the way the test reports them, most-tested first. Tap the ☆ to pin a concept to the top of its group — your pins are saved to your account. Watch the lesson, then practice it.</p>'
+    +'<input id="libq" placeholder="Search concepts…" oninput="libFilter(this.value)" style="width:100%;max-width:420px;margin-top:6px;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:rgba(10,14,24,.5);color:inherit;font-size:14.5px;outline:none"></div>';
   cats.forEach((cat,ci)=>{
     const list = by[cat].slice().sort(libSort);
     h += '<div class="card lib-cat" data-cat="'+ci+'"><h2 style="font-size:16px">'+esc(cat)
-       + ' <span class="dim" style="font-weight:400;font-size:13px">\u00b7 '+list.length+' concept'+(list.length===1?'':'s')+'</span></h2>';
+       + ' <span class="dim" style="font-weight:400;font-size:13px">· '+list.length+' concept'+(list.length===1?'':'s')+'</span></h2>';
     list.forEach(r=>{
       const vid = LIBV && r.concept_id && LIBV[r.concept_id];
+      const on = LIB_STARS.has(r.concept_no);
       h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no).toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)">'
+        + '<span onclick="libToggleStar('+r.concept_no+',event)" title="'+(on?'Unpin this concept':'Pin this concept to the top of its group')+'"'
+        + ' style="cursor:pointer;flex:none;font-size:19px;line-height:1;width:28px;text-align:center;'
+        + (on?'color:#eab308':'color:#4a5266')+'">'+(on?'★':'☆')+'</span>'
         + '<div style="flex:1;min-width:0"><b>'+esc(r.name)+'</b>'
-        + (r.is_starred?' <span title="appears on effectively every form" style="color:#eab308">\u2605</span>':'')
         + '<div class="dim" style="font-size:12.5px;margin-top:2px">Concept '+r.concept_no
-        + (r.q_per_form!=null?' \u00b7 ~'+(+r.q_per_form).toFixed(1)+' per test':'')
-        + (vid?' \u00b7 <span style="color:#10b981">\u25b6 lesson filmed</span>':'')
+        + (r.q_per_form!=null?' · ~'+(+r.q_per_form).toFixed(1)+' per test':'')
+        + (vid?' · <span style="color:#10b981">▶ lesson filmed</span>':'')
         + '</div></div>'
-        + '<button class="btn2" style="flex:none" onclick="openConceptLearn('+r.concept_no+',\''+esc(String(r.name).replace(/'/g,'\\\''))+'\')">\u25b6 Learn</button>'
-        + '<button class="btn" style="flex:none" onclick="startPractice(\'concept:'+r.concept_no+'\',\'content\')">Practice \u2192</button>'
+        + '<button class="btn2" style="flex:none" onclick="openConceptLearn('+r.concept_no+',\''+esc(String(r.name).replace(/'/g,'\\\''))+'\')">▶ Learn</button>'
+        + '<button class="btn" style="flex:none" onclick="startPractice(\'concept:'+r.concept_no+'\',\'content\')">Practice →</button>'
         + '</div>';
     });
     h += '</div>';
