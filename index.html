@@ -166,6 +166,8 @@ a.link:hover{color:var(--cyan)}
 .nav-green:hover{background:#0ca678!important;box-shadow:0 6px 16px rgba(16,185,129,.35)}
 .nav-red{background:#ef4444!important;border-color:#ef4444!important;color:#fff!important}
 .nav-red:hover{background:#dc3a3a!important;box-shadow:0 6px 16px rgba(239,68,68,.35)}
+.nav-purple{background:#8b5cf6!important;border-color:#8b5cf6!important;color:#fff!important}
+.nav-purple:hover{background:#7c4ee8!important;box-shadow:0 6px 16px rgba(139,92,246,.35)}
 
 .vswitchWrap{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:-webkit-user-select;user-select:none}
 .vswitch{position:relative;width:44px;height:24px;border-radius:14px;background:#2b3654;border:1px solid var(--line);transition:background .2s ease;flex-shrink:0;display:inline-block}
@@ -401,6 +403,7 @@ body.mview .qlayout{grid-template-columns:1fr}
 </div>
 <div id="v-results" class="hidden"></div>
 <div id="v-practice" class="hidden"></div>
+<div id="v-library" class="hidden"></div>
 <div id="v-tutor" class="hidden"></div>
 
 </div>
@@ -431,7 +434,7 @@ function go(v){
   }
   if(v!=='practice' && PR && PR.qTimerId){ clearInterval(PR.qTimerId); PR.qTimerId=null; }
   if(v!=='plans' && typeof QRAF!=='undefined' && QRAF){ cancelAnimationFrame(QRAF); QRAF=null; }
-  ['auth','paywall','home','test','results','tutor','plans','practice'].forEach(x=>document.getElementById('v-'+x).classList.toggle('hidden', x!==v)); window.scrollTo(0,0); }
+  ['auth','paywall','home','test','results','tutor','plans','practice','library'].forEach(x=>document.getElementById('v-'+x).classList.toggle('hidden', x!==v)); window.scrollTo(0,0); }
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* ScoreMaxx figure renderer — draws math_items.art_payload as inline SVG.
@@ -2319,7 +2322,7 @@ function renderNav(){
     el.innerHTML = viewToggleBtn()+'<button class="btn2 nav-red" onclick="signOut()">Sign out</button>';
     return;
   }
-  let h = viewToggleBtn()+'<button class="btn2 nav-blue" onclick="renderHome().then(()=>go(\'home\'))">Dashboard</button> <button class="btn2 nav-yellow" onclick="renderPlans()">Study Plan</button>';
+  let h = viewToggleBtn()+'<button class="btn2 nav-blue" onclick="renderHome().then(()=>go(\'home\'))">Dashboard</button> <button class="btn2 nav-yellow" onclick="renderPlans()">Study Plan</button>' + ' <button class="btn2 nav-purple" onclick="renderLibrary().then(()=>go(\'library\'))">Practice</button>';
   if(ME.role==='tutor'||ME.role==='admin') h += ' <button class="btn2 nav-green" onclick="renderTutor()">Tutor View</button>';
   else if(ME.subscription_status==='active') h += ' <button class="btn2" onclick="openBilling(this)">Billing</button>';
   h += ' <button class="btn2 nav-red" onclick="signOut()">Sign out</button>';
@@ -4657,6 +4660,139 @@ function openLearn(skill){
     +'<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px 10px"><h2 style="font-size:18px;font-weight:800;color:#eef0f5">Learn \u00b7 '+esc(nice)+'</h2><span onclick="document.getElementById(\'learn-overlay\').remove()" style="cursor:pointer;color:#9aa0ae;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #23262f;border-radius:9px">\u2715</span></div>'
     +'<div style="padding:0 22px 18px">'+inner+'</div>'
     +'<div style="padding:0 22px 20px"><button onclick="document.getElementById(\'learn-overlay\').remove();if(M4)m4markToday(M4.today);startPractice(\''+esc(skill)+'\',\'content\')" style="width:100%;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:12px;padding:13px;cursor:pointer">Now practice this \u2192</button></div></div>';
+}
+
+// ---------- PRACTICE LIBRARY ----------
+// Every math concept, grouped the way the ACT reports them, most-tested first.
+// The list comes from the concepts catalogue; the video for a concept comes
+// from learn_for_concept(), which knows not just WHICH shoot covers it but the
+// exact second its chapter starts at — so one long filmed session serves many
+// concepts, each opening at its own moment. A concept whose shoot has no
+// uploaded video yet gets the same "coming soon" card the daily Learn uses.
+let LIB = null, LIBV = null;
+const LIB_CATS = ['Number & Quantity','Algebra','Functions','Geometry',
+                  'Statistics & Probability','Integrating Essential Skills'];
+const LIB_CODE = {NUM:'Number & Quantity',ALG:'Algebra',FUN:'Functions',GEO:'Geometry',
+                  STAT:'Statistics & Probability',IES:'Integrating Essential Skills'};
+async function libLoad(){
+  if(LIB) return LIB;
+  let rows = null;
+  try{
+    const {data} = await db.from('concepts')
+      .select('concept_id,concept_no,name,category,q_per_form,is_starred')
+      .eq('section','math').order('concept_no');
+    if(data && data.length) rows = data;
+  }catch(_){}
+  if(!rows){
+    // the catalogue table is not readable — fall back to the recipes the banks
+    // themselves installed, which every student can already read
+    try{
+      const {data} = await db.from('math_recipes').select('concept_no,concept_name,category');
+      const seen = {};
+      (data||[]).forEach(r=>{ if(!seen[r.concept_no]) seen[r.concept_no] =
+        {concept_no:r.concept_no, name:r.concept_name,
+         category:LIB_CODE[r.category]||r.category, q_per_form:null, is_starred:false}; });
+      rows = Object.values(seen);
+    }catch(_){ rows = []; }
+  }
+  LIB = rows;
+  // which concepts have a filmed, uploaded lesson — for the ▶ badge only; the
+  // overlay re-checks properly when opened. Failure here just means no badges.
+  try{
+    const [{data:cv},{data:sh}] = await Promise.all([
+      db.from('concept_video').select('concept_id,shoot_no'),
+      db.from('shoots').select('shoot_no,video_url')]);
+    const up = {}; (sh||[]).forEach(x=>{ if(x.video_url) up[x.shoot_no]=true; });
+    LIBV = {}; (cv||[]).forEach(x=>{ if(up[x.shoot_no]) LIBV[x.concept_id]=true; });
+  }catch(_){ LIBV = null; }
+  return LIB;
+}
+function libSort(a,b){
+  const sa=a.is_starred?1:0, sb=b.is_starred?1:0;
+  if(sb!==sa) return sb-sa;
+  const qa=a.q_per_form==null?-1:+a.q_per_form, qb=b.q_per_form==null?-1:+b.q_per_form;
+  if(qb!==qa) return qb-qa;
+  return a.concept_no-b.concept_no;
+}
+async function renderLibrary(){
+  const el = document.getElementById('v-library');
+  el.innerHTML = skel(3);
+  const rows = await libLoad();
+  if(!rows.length){
+    el.innerHTML = '<div class="card"><h2>Practice</h2><p class="dim">The concept list could not be loaded — check back in a moment.</p></div>';
+    return;
+  }
+  const by = {};
+  rows.forEach(r=>{ (by[r.category]=by[r.category]||[]).push(r); });
+  const cats = LIB_CATS.filter(c=>by[c]).concat(Object.keys(by).filter(c=>LIB_CATS.indexOf(c)<0));
+  let h = '<div class="card"><h2>Practice</h2>'
+    +'<p class="dim">Every math concept on the ACT, grouped the way the test reports them. The most-tested concepts sit at the top of each group — \u2605 marks the ones that show up on effectively every form. Watch the lesson, then practice it.</p>'
+    +'<input id="libq" placeholder="Search concepts\u2026" oninput="libFilter(this.value)" style="width:100%;max-width:420px;margin-top:6px;padding:11px 14px;border-radius:11px;border:1px solid var(--line);background:rgba(10,14,24,.5);color:inherit;font-size:14.5px;outline:none"></div>';
+  cats.forEach((cat,ci)=>{
+    const list = by[cat].slice().sort(libSort);
+    h += '<div class="card lib-cat" data-cat="'+ci+'"><h2 style="font-size:16px">'+esc(cat)
+       + ' <span class="dim" style="font-weight:400;font-size:13px">\u00b7 '+list.length+' concept'+(list.length===1?'':'s')+'</span></h2>';
+    list.forEach(r=>{
+      const vid = LIBV && r.concept_id && LIBV[r.concept_id];
+      h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no).toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)">'
+        + '<div style="flex:1;min-width:0"><b>'+esc(r.name)+'</b>'
+        + (r.is_starred?' <span title="appears on effectively every form" style="color:#eab308">\u2605</span>':'')
+        + '<div class="dim" style="font-size:12.5px;margin-top:2px">Concept '+r.concept_no
+        + (r.q_per_form!=null?' \u00b7 ~'+(+r.q_per_form).toFixed(1)+' per test':'')
+        + (vid?' \u00b7 <span style="color:#10b981">\u25b6 lesson filmed</span>':'')
+        + '</div></div>'
+        + '<button class="btn2" style="flex:none" onclick="openConceptLearn('+r.concept_no+',\''+esc(String(r.name).replace(/'/g,'\\\''))+'\')">\u25b6 Learn</button>'
+        + '<button class="btn" style="flex:none" onclick="startPractice(\'concept:'+r.concept_no+'\',\'content\')">Practice \u2192</button>'
+        + '</div>';
+    });
+    h += '</div>';
+  });
+  el.innerHTML = h;
+}
+function libFilter(q){
+  q = String(q||'').trim().toLowerCase();
+  document.querySelectorAll('#v-library .lib-row').forEach(row=>{
+    row.style.display = (!q || row.getAttribute('data-q').indexOf(q)>=0) ? 'flex' : 'none';
+  });
+  document.querySelectorAll('#v-library .lib-cat').forEach(cardEl=>{
+    const any = Array.from(cardEl.querySelectorAll('.lib-row')).some(r=>r.style.display!=='none');
+    cardEl.style.display = any ? '' : 'none';
+  });
+}
+function libTime(sec){
+  sec = Math.max(0, sec|0);
+  const m = Math.floor(sec/60), s2 = sec%60;
+  return m+':'+String(s2).padStart(2,'0');
+}
+async function openConceptLearn(no, name){
+  let v = null;
+  try{
+    const {data} = await db.rpc('learn_for_concept', {p_concept_no: no});
+    if(data && data.length) v = data.find(x=>x.video_url) || data[0];
+  }catch(_){}
+  const url = v && v.video_url;
+  const start = (v && v.start_sec) ? (v.start_sec|0) : 0;
+  let inner;
+  if(url){
+    // the #t= fragment starts playback at the chapter; the onloadedmetadata
+    // seek is the belt to that suspender for players that ignore fragments
+    inner = '<video src="'+esc(url)+(start?'#t='+start:'')+'" controls autoplay'
+      + (start?' onloadedmetadata="if(this.currentTime<'+start+')this.currentTime='+start+'"':'')
+      + ' style="width:100%;border-radius:12px;background:#000"></video>'
+      + '<p class="dim" style="font-size:12.5px;margin:8px 0 0">'
+      + esc(v.shoot_title||'Lesson video')
+      + (v.chapter_no?' \u00b7 chapter '+v.chapter_no+((v.chapter_end&&v.chapter_end!==v.chapter_no)?'\u2013'+v.chapter_end:''):'')
+      + (start?' \u00b7 starts at '+libTime(start):'')
+      + '</p>';
+  } else {
+    inner = '<div style="background:#0f1219;border:1px dashed #2c303c;border-radius:12px;padding:36px 18px;text-align:center;color:#8b96ad"><div style="font-size:34px;margin-bottom:8px">\ud83d\udcfa</div><b style="color:#eef0f5">Lesson video coming soon</b><br><span style="font-size:13px">Our tutors are filming the '+esc(name)+' lesson. For now, jump into Practice \u2014 every miss explains the concept.</span></div>';
+  }
+  let ov=document.getElementById('learn-overlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='learn-overlay'; ov.style.cssText='position:fixed;inset:0;z-index:85;background:rgba(5,6,9,.78);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif'; ov.onclick=e=>{ if(e.target===ov) ov.remove(); }; document.body.appendChild(ov); }
+  ov.innerHTML='<div style="width:min(680px,96vw);background:#14161d;border:1px solid #2c303c;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.6)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px 10px"><h2 style="font-size:18px;font-weight:800;color:#eef0f5">Learn \u00b7 '+esc(name)+'</h2><span onclick="document.getElementById(\'learn-overlay\').remove()" style="cursor:pointer;color:#9aa0ae;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #23262f;border-radius:9px">\u2715</span></div>'
+    +'<div style="padding:0 22px 18px">'+inner+'</div>'
+    +'<div style="padding:0 22px 20px"><button onclick="document.getElementById(\'learn-overlay\').remove();startPractice(\'concept:'+no+'\',\'content\')" style="width:100%;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:12px;padding:13px;cursor:pointer">Now practice this \u2192</button></div></div>';
 }
 function m4suggestMode(focus){
   const t=((focus&&focus.desc)||'').toLowerCase();
