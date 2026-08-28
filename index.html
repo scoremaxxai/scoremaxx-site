@@ -58,19 +58,19 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
                    radial-gradient(520px 300px at 92% 4%, rgba(52,198,211,.055), transparent 70%);
   background-attachment:fixed;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-.wrap{max-width:min(1440px, 100%);margin:0 auto;padding:28px clamp(16px,3vw,44px) 70px}
+.wrap{max-width:none;margin:0 auto;padding:28px clamp(16px,2.5vw,48px) 70px}
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;flex-wrap:wrap;gap:10px}
 .logo{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:.3px}
 .logo span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:18px;
-  box-shadow:var(--shadow-2);animation:fadeUp .35s ease both}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line-strong);border-radius:16px;padding:24px;margin-bottom:18px;
+  box-shadow:var(--shadow-2), inset 0 1px 0 rgba(255,255,255,.05);animation:fadeUp .35s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 h2{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;margin-bottom:14px;letter-spacing:.2px}
 h3{font-size:14px;margin-bottom:8px}
 .dim{color:var(--dim);font-size:13px;line-height:1.6}
 button{cursor:pointer;border:none;border-radius:11px;font-weight:600;font-size:14px;font-family:inherit;transition:all .18s ease}
 .btn{background:var(--acc);color:#fff;padding:12px 24px;font-weight:600;
-  box-shadow:0 1px 0 rgba(255,255,255,.16) inset, 0 6px 18px -8px rgba(124,92,255,.9)}
+  box-shadow:0 1px 0 rgba(255,255,255,.16) inset, 0 6px 18px -8px rgba(124,92,255,.9), 0 0 26px -6px rgba(124,92,255,.55)}
 .btn:hover{background:var(--acc2);transform:translateY(-1px)}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .btn2{background:var(--surface-3);color:var(--text);border:1px solid var(--line);padding:11px 19px}
@@ -1132,7 +1132,7 @@ body:has(#v-landing:not(.hidden)) header{display:none}
 @media (prefers-reduced-transparency:reduce){#v-landing .topbar{background:#0a0b10;backdrop-filter:none}}
 
 /* ═══════ app chrome & dashboard (mockup revamp) ═══════ */
-header{position:sticky;top:0;z-index:40;background:rgba(8,9,13,.8);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border-bottom:1px solid var(--line);margin:-28px calc(-1*clamp(16px,3vw,44px)) 26px;padding:12px clamp(16px,3vw,44px)}
+header{position:sticky;top:0;z-index:40;background:rgba(8,9,13,.8);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border-bottom:1px solid var(--line);margin:-28px calc(-1*clamp(16px,2.5vw,48px)) 26px;padding:12px clamp(16px,2.5vw,48px)}
 body.light header{background:rgba(244,245,249,.85)}
 body:has(#v-landing:not(.hidden)) header, body:has(#v-auth:not(.hidden)) header{display:none}
 .mainnav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
@@ -1144,8 +1144,10 @@ body.light .navlink:hover{background:rgba(23,27,38,.06)}
 .avatarBtn:active{transform:scale(.94)}
 .dashhead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:20px;flex-wrap:wrap}
 .dash-h1{font-family:'Space Grotesk',sans-serif;font-size:27px;font-weight:700;letter-spacing:-.02em;margin:0}
-.dash-top{display:grid;grid-template-columns:clamp(280px,24vw,360px) 1fr;gap:18px;align-items:start}
-.dash-mid{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start}
+.dash-top{display:grid;grid-template-columns:clamp(300px,22vw,430px) 1fr;gap:18px;align-items:stretch}
+.dash-mid{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:stretch}
+.dash-mid > .card{height:100%;box-sizing:border-box}
+.dash-top > div:first-child > .card{height:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center}
 @media(max-width:1150px){.dash-mid{grid-template-columns:1.2fr 1fr}}
 @media(max-width:980px){.dash-top,.dash-mid{grid-template-columns:1fr}}
 @media(max-width:520px){.secgrid{grid-template-columns:1fr 1fr;gap:10px}.tt-grid{grid-template-columns:1fr 1fr;gap:10px}
@@ -1177,6 +1179,9 @@ body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 .swTrack::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .18s var(--ease-out)}
 .switchWrap input:checked + .swTrack{background:var(--acc);border-color:transparent}
 .switchWrap input:checked + .swTrack::after{transform:translateX(16px)}
+#takeTestCard{border-color:var(--acc-line);
+  box-shadow:0 0 0 1px rgba(124,92,255,.10), 0 10px 44px -14px rgba(124,92,255,.42), var(--shadow-2), inset 0 1px 0 rgba(255,255,255,.05)}
+.seccard{box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .card-hd2{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 .cardlabel{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:0;font-family:'Inter',sans-serif}
 .lgd{display:flex;gap:12px;font-size:11.5px;color:var(--dim);align-items:center;flex-wrap:wrap}
@@ -3773,7 +3778,7 @@ async function renderHome(){
       const sec = s.tests && s.tests.section;
       const c = SCOL[sec] || 'var(--acc)';
       const bh = Math.max(8, (s.est_score/36)*100);
-      return '<div class="trajcol"><b style="font-size:13px">'+s.est_score+'</b><div class="trajbar" style="height:'+bh+'%;background:'+c+'"></div><span class="dim" style="font-size:10px">'+esc(SLABEL[sec]||'').slice(0,7)+'<br>'+s.started_at.slice(5,10)+'</span></div>';
+      return '<div class="trajcol"><b style="font-size:13px">'+s.est_score+'</b><div class="trajbar" style="height:'+bh+'%;background:'+c+';box-shadow:0 0 16px -3px '+c+', 0 0 5px -1px '+c+'"></div><span class="dim" style="font-size:10px">'+esc(SLABEL[sec]||'').slice(0,7)+'<br>'+s.started_at.slice(5,10)+'</span></div>';
     }).join('')+'</div>';
   } else trajCard += '<p class="dim">Your scores chart themselves here after your first test.</p>';
   trajCard += '</div>';
