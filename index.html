@@ -58,7 +58,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
                    radial-gradient(520px 300px at 92% 4%, rgba(52,198,211,.055), transparent 70%);
   background-attachment:fixed;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-.wrap{max-width:1180px;margin:0 auto;padding:28px 22px 70px}
+.wrap{max-width:min(1440px, 100%);margin:0 auto;padding:28px clamp(16px,3vw,44px) 70px}
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;flex-wrap:wrap;gap:10px}
 .logo{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:.3px}
 .logo span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -129,7 +129,8 @@ body.light .pmode-select{background:#ffffff;border-color:#cbd5e6;color:#20304f}
 .stat:hover{transform:translateY(-2px)}
 .stat .v{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700}
 .stat .l{font-size:10.5px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.9px;font-weight:600}
-table{width:100%;border-collapse:collapse;font-size:13px}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
 th{color:var(--dim);text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;padding:9px 10px;border-bottom:1px solid var(--line);font-weight:600}
 td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:hover td{background:rgba(124,92,255,.04)}
@@ -147,8 +148,8 @@ summary::-webkit-details-marker{display:none}
 a.link{color:var(--acc);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 a.link:hover{color:var(--cyan)}
 .err{color:var(--bad);font-size:13px;margin-top:10px;min-height:18px}
-.trajrow{display:flex;align-items:flex-end;gap:10px;height:130px;padding:10px 0}
-.trajcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%}
+.trajrow{display:flex;align-items:flex-end;gap:10px;height:130px;padding:10px 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.trajcol{flex:1;min-width:44px;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%}
 .trajbar{width:70%;max-width:44px;background:linear-gradient(180deg,var(--acc),var(--acc2));border-radius:7px 7px 0 0;box-shadow:0 4px 14px rgba(91,156,255,.25);transition:height .5s ease}
 .goalwrap{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
 .gap{font-size:13px;color:var(--dim)}
@@ -1131,7 +1132,7 @@ body:has(#v-landing:not(.hidden)) header{display:none}
 @media (prefers-reduced-transparency:reduce){#v-landing .topbar{background:#0a0b10;backdrop-filter:none}}
 
 /* ═══════ app chrome & dashboard (mockup revamp) ═══════ */
-header{position:sticky;top:0;z-index:40;background:rgba(8,9,13,.8);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border-bottom:1px solid var(--line);margin:-28px -22px 26px;padding:12px 22px}
+header{position:sticky;top:0;z-index:40;background:rgba(8,9,13,.8);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border-bottom:1px solid var(--line);margin:-28px calc(-1*clamp(16px,3vw,44px)) 26px;padding:12px clamp(16px,3vw,44px)}
 body.light header{background:rgba(244,245,249,.85)}
 body:has(#v-landing:not(.hidden)) header, body:has(#v-auth:not(.hidden)) header{display:none}
 .mainnav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
@@ -1143,9 +1144,17 @@ body.light .navlink:hover{background:rgba(23,27,38,.06)}
 .avatarBtn:active{transform:scale(.94)}
 .dashhead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:20px;flex-wrap:wrap}
 .dash-h1{font-family:'Space Grotesk',sans-serif;font-size:27px;font-weight:700;letter-spacing:-.02em;margin:0}
-.dash-top{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+.dash-top{display:grid;grid-template-columns:clamp(280px,24vw,360px) 1fr;gap:18px;align-items:start}
 .dash-mid{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start}
+@media(max-width:1150px){.dash-mid{grid-template-columns:1.2fr 1fr}}
 @media(max-width:980px){.dash-top,.dash-mid{grid-template-columns:1fr}}
+@media(max-width:520px){.secgrid{grid-template-columns:1fr 1fr;gap:10px}.tt-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .dashhead{flex-direction:column;align-items:stretch}.dashhead .btn{width:100%}
+  .dash-h1{font-size:22px}}
+/* the mobile block overrides .wrap padding to 14px 12px — the sticky
+   header's negative margins must follow or it pokes past the viewport */
+@media(max-width:640px){header{margin:-14px -12px 18px;padding:10px 12px}}
+body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 .secgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
 @media(max-width:980px){.secgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .seccard{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:15px 16px;display:flex;flex-direction:column;gap:8px}
@@ -3782,8 +3791,8 @@ async function renderHome(){
 
   // ---- history ----
   const histHtml = '<div class="card"><div class="card-hd2"><h2 class="cardlabel">Test history</h2>'+(ss.length?'<a class="link" onclick="exportHistoryCSV()">Export CSV</a>':'')+'</div>'+(ss.length?
-    '<table><tr><th>Date</th><th>Test</th><th>Raw</th><th>Score</th><th>Predicted</th><th></th></tr>'+
-    ss.slice().reverse().map(s=>'<tr><td>'+s.started_at.slice(0,10)+'</td><td>'+esc(s.tests?.name||'')+'</td><td>'+s.raw_correct+'/'+s.raw_total+'</td><td><b>'+s.est_score+'</b></td><td style="color:var(--good)">'+s.predicted_score+'</td><td><a class="link" onclick="openSession(\''+s.id+'\')">Report</a></td></tr>').join('')+'</table>'
+    '<div class="tablewrap"><table><tr><th>Date</th><th>Test</th><th>Raw</th><th>Score</th><th>Predicted</th><th></th></tr>'+
+    ss.slice().reverse().map(s=>'<tr><td>'+s.started_at.slice(0,10)+'</td><td>'+esc(s.tests?.name||'')+'</td><td>'+s.raw_correct+'/'+s.raw_total+'</td><td><b>'+s.est_score+'</b></td><td style="color:var(--good)">'+s.predicted_score+'</td><td><a class="link" onclick="openSession(\''+s.id+'\')">Report</a></td></tr>').join('')+'</table></div>'
     :'<div class="emptystate"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5B9CFF" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><br><b>No tests yet</b><br>Pick a section in “Take a test” above — your first diagnostic unlocks your study plan and goal ring.</div>')+'</div>';
 
   el.innerHTML = h
