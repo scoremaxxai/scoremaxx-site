@@ -3772,7 +3772,11 @@ async function renderHome(){
   let planCard = '<div class="card"><div class="card-hd2"><h2 class="cardlabel">Next in your plan</h2><a class="link" onclick="renderPlans()">View all</a></div>';
   const steps = plan ? (plan.plan_steps||[]).slice().sort((a,b)=>a.position-b.position).filter(st=>st.status!=='done').slice(0,3) : [];
   if(steps.length){
-    planCard += steps.map((st,i)=>'<div class="planitem" onclick="renderPlans()"><span class="pn">'+(i+1)+'</span><div><b style="font-size:13.5px">'+esc((st.title||'').replace(/^Fix:\s*/i,''))+'</b></div></div>').join('');
+    planCard += steps.map((st,i)=>{
+      const sub = st.description || (st.section ? st.section.charAt(0).toUpperCase()+st.section.slice(1) : '');
+      return '<div class="planitem" onclick="renderPlans()"><span class="pn">'+(i+1)+'</span><div><b style="font-size:13.5px">'+esc((st.title||'').replace(/^Fix:\s*/i,''))+'</b>'
+        +(sub?'<div class="dim" style="font-size:12px;margin-top:2px">'+esc(String(sub).slice(0,70))+'</div>':'')+'</div></div>';
+    }).join('');
   } else planCard += '<p class="dim">Take a test and your personalized plan appears here.</p>';
   planCard += '</div>';
 
