@@ -1129,6 +1129,54 @@ body:has(#v-landing:not(.hidden)) header{display:none}
   .spark i{width:var(--w)}
 }
 @media (prefers-reduced-transparency:reduce){#v-landing .topbar{background:#0a0b10;backdrop-filter:none}}
+
+/* ═══════ app chrome & dashboard (mockup revamp) ═══════ */
+header{position:sticky;top:0;z-index:40;background:rgba(8,9,13,.8);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border-bottom:1px solid var(--line);margin:-28px -22px 26px;padding:12px 22px}
+body.light header{background:rgba(244,245,249,.85)}
+body:has(#v-landing:not(.hidden)) header, body:has(#v-auth:not(.hidden)) header{display:none}
+.mainnav{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.navlink{position:relative;padding:7px 13px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--dim);transition:color .14s,background-color .14s,box-shadow .14s;white-space:nowrap;user-select:none}
+.navlink:hover{color:var(--text);background:rgba(255,255,255,.05)}
+body.light .navlink:hover{background:rgba(23,27,38,.06)}
+.navlink.active{color:var(--c,var(--acc2));background:color-mix(in srgb,var(--c,var(--acc)) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c,var(--acc)) 40%,transparent)}
+.avatarBtn{width:32px;height:32px;border-radius:50%;background:linear-gradient(150deg,var(--acc2),var(--acc));color:#fff;font-weight:700;font-size:13px;border:none;display:grid;place-items:center;flex-shrink:0}
+.avatarBtn:active{transform:scale(.94)}
+.dashhead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+.dash-h1{font-family:'Space Grotesk',sans-serif;font-size:27px;font-weight:700;letter-spacing:-.02em;margin:0}
+.dash-top{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+.dash-mid{display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.dash-top,.dash-mid{grid-template-columns:1fr}}
+.secgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+@media(max-width:980px){.secgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.seccard{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:15px 16px;display:flex;flex-direction:column;gap:8px}
+.chip{font-size:10px;font-weight:700;letter-spacing:.03em;padding:3px 9px;border-radius:12px;white-space:nowrap}
+.chip-warn{background:rgba(233,161,59,.14);color:var(--warn)}
+.chip-good{background:rgba(47,191,143,.15);color:var(--good)}
+.secscore{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;line-height:1}
+.secbar{height:4px;border-radius:3px;background:var(--panel2);overflow:hidden}
+.secbar i{display:block;height:100%;border-radius:3px}
+.goalbar{height:6px;border-radius:4px;background:var(--panel2);overflow:hidden}
+.goalbar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.tt-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media(max-width:700px){.tt-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ttile{display:flex;flex-direction:column;align-items:flex-start;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;color:var(--text);text-align:left;transition:border-color .14s,transform .16s,background-color .14s}
+.ttile:hover{border-color:var(--line-strong);background:var(--panel2);transform:translateY(-1px)}
+.ttile b{font-size:14px}
+.switchWrap{display:inline-flex;align-items:center;gap:9px;cursor:pointer}
+.switchWrap input{position:absolute;opacity:0;pointer-events:none}
+.swTrack{width:36px;height:20px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);position:relative;transition:background-color .16s;flex-shrink:0}
+.swTrack::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .18s var(--ease-out)}
+.switchWrap input:checked + .swTrack{background:var(--acc);border-color:transparent}
+.switchWrap input:checked + .swTrack::after{transform:translateX(16px)}
+.card-hd2{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.cardlabel{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:0;font-family:'Inter',sans-serif}
+.lgd{display:flex;gap:12px;font-size:11.5px;color:var(--dim);align-items:center;flex-wrap:wrap}
+.lgd i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+.planitem{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer;align-items:center}
+.planitem:last-child{border-bottom:none}
+.planitem .pn{width:22px;height:22px;border-radius:50%;background:var(--acc-dim);color:var(--acc2);font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.planitem:hover b{color:var(--acc2)}
+@media(max-width:640px){.mainnav{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}}
 </style>
 </head>
 <body>
@@ -1563,7 +1611,9 @@ function go(v){
   }
   if(v!=='practice' && PR && PR.qTimerId){ clearInterval(PR.qTimerId); PR.qTimerId=null; }
   if(v!=='plans' && typeof QRAF!=='undefined' && QRAF){ cancelAnimationFrame(QRAF); QRAF=null; }
-  ['landing','auth','paywall','home','test','results','tutor','plans','practice','library'].forEach(x=>document.getElementById('v-'+x).classList.toggle('hidden', x!==v)); window.scrollTo(0,0); }
+  ['landing','auth','paywall','home','test','results','tutor','plans','practice','library'].forEach(x=>document.getElementById('v-'+x).classList.toggle('hidden', x!==v));
+  document.querySelectorAll('.navlink[data-nav]').forEach(a=>a.classList.toggle('active', a.dataset.nav===v));
+  window.scrollTo(0,0); }
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* ScoreMaxx figure renderer — draws math_items.art_payload as inline SVG.
@@ -3503,14 +3553,18 @@ function toggleViewMode(){
 function renderNav(){
   const el = document.getElementById('navBtns');
   if(!ME){ el.innerHTML=''; return; }
+  const avatar = '<button class="avatarBtn" title="Sign out" onclick="if(confirm(\'Sign out of ScoreMaxx?\'))signOut()">'+esc(((ME.full_name||'S').trim()[0]||'S').toUpperCase())+'</button>';
   if(!hasAccess()){
-    el.innerHTML = viewToggleBtn()+'<button class="btn2 nav-red" onclick="signOut()">Sign out</button>';
+    el.innerHTML = viewToggleBtn()+themeToggleBtn()+'<a class="navlink" onclick="signOut()">Sign out</a>';
     return;
   }
-  let h = viewToggleBtn()+'<button class="btn2 nav-blue" onclick="renderHome().then(()=>go(\'home\'))">Dashboard</button> <button class="btn2 nav-yellow" onclick="renderPlans()">Study Plan</button>' + ' <button class="btn2 nav-green" onclick="renderLibrary().then(()=>go(\'library\'))">Practice</button>';
-  if(ME.role==='tutor'||ME.role==='admin') h += ' <button class="btn2 nav-purple" onclick="renderTutor()">Tutor View</button>';
-  else if(ME.subscription_status==='active') h += ' <button class="btn2" onclick="openBilling(this)">Billing</button>';
-  h += ' <button class="btn2 nav-red" onclick="signOut()">Sign out</button>';
+  let h = '<nav class="mainnav">'
+    +'<a class="navlink" data-nav="home" style="--c:var(--sec-english)" onclick="renderHome().then(()=>go(\'home\'))">Dashboard</a>'
+    +'<a class="navlink" data-nav="plans" style="--c:var(--sec-math)" onclick="renderPlans()">Study Plan</a>'
+    +'<a class="navlink" data-nav="library" style="--c:var(--sec-reading)" onclick="renderLibrary().then(()=>go(\'library\'))">Practice</a>';
+  if(ME.role==='tutor'||ME.role==='admin') h += '<a class="navlink" data-nav="tutor" style="--c:var(--sec-science)" onclick="renderTutor()">Tutor View</a>';
+  else if(ME.subscription_status==='active') h += '<a class="navlink" onclick="openBilling(this)">Billing</a>';
+  h += '</nav>'+viewToggleBtn()+themeToggleBtn()+avatar;
   el.innerHTML = h;
 }
 applyViewMode();
@@ -3599,18 +3653,19 @@ async function waitForActivation(uid){
 async function renderHome(){
   const el = document.getElementById('v-home');
   el.innerHTML = skel(4);
-  const [{data:sessions},{data:goals}] = await Promise.all([
+  const [{data:sessions},{data:goals},{data:plans}] = await Promise.all([
     db.from('sessions').select('*, tests(name,section)').eq('student_id',ME.id).not('finished_at','is',null).order('started_at'),
-    db.from('goals').select('*').eq('student_id',ME.id).order('created_at',{ascending:false}).limit(1)
+    db.from('goals').select('*').eq('student_id',ME.id).order('created_at',{ascending:false}).limit(1),
+    db.from('study_plans').select('id, plan_steps(*)').eq('student_id',ME.id).order('created_at',{ascending:false}).limit(1)
   ]);
-  const ss = sessions||[];
+  const ss = sessions||[];  window._smxSessions = ss;
   const goal = (goals||[])[0];
-  const last = ss[ss.length-1];
+  const plan = (plans||[])[0];
 
-  // ---- score rings: latest score per section + composite ----
   const SECTS = ['english','math','reading','science'];
   const SLABEL = {english:'English', math:'Math', reading:'Reading', science:'Science'};
-  const SCOL = {english:'#5B9CFF', math:'#eab308', reading:'#ef4444', science:'#2FBF8F'};
+  const SCOL = {english:'var(--sec-english)', math:'var(--sec-math)', reading:'var(--sec-reading)', science:'var(--sec-science)'};
+  const SPEC = {english:'50 Q · 35 min', math:'45 Q · 50 min', reading:'36 Q · 40 min', science:'39 Q · 35 min'};
   const latestBy = {};
   ss.forEach(s=>{ const sec=s.tests && s.tests.section; if(sec) latestBy[sec]=s; });
   const sectionScore = {}; SECTS.forEach(sec=>{ sectionScore[sec] = latestBy[sec] ? latestBy[sec].est_score : null; });
@@ -3623,70 +3678,130 @@ async function renderHome(){
     const frac = score==null?0:Math.max(0,Math.min(1,score/36));
     const off = (CIRC*(1-frac)).toFixed(1);
     const goalTick = (big && goal) ? '<line x1="'+cx+'" y1="'+(sw-2)+'" x2="'+cx+'" y2="'+(sw+11)+'" stroke="var(--warn)" stroke-width="3" stroke-linecap="round" transform="rotate('+Math.round(360*Math.min(1,goal.target_score/36))+' '+cx+' '+cy+')"/>' : '';
-    // composite ring uses the progress-bar gradient + glow; section rings stay flat
     const gdef = big ? '<defs><linearGradient id="compGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset=".5" stop-color="#9B84FF"/><stop offset="1" stop-color="#A98BFF"/></linearGradient><filter id="compGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>' : '';
     const stroke = big ? 'url(#compGrad)' : color;
     const glow = big ? ' filter="url(#compGlow)"' : '';
-    return '<div style="position:relative;width:'+size+'px;height:'+size+'px">'
+    return '<div style="position:relative;width:'+size+'px;height:'+size+'px;margin:0 auto">'
       +'<svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'">'+gdef
       +'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="var(--panel2)" stroke-width="'+sw+'"/>'
       +(score!=null?'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+stroke+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-dasharray="'+CIRC.toFixed(1)+'" stroke-dashoffset="'+off+'" transform="rotate(-90 '+cx+' '+cy+')"'+glow+'/>':'')
       +goalTick+'</svg>'
       +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">'
-      +'<span class="ringNum" style="font-family:\'Space Grotesk\',sans-serif;font-size:'+(big?36:22)+'px;font-weight:700;line-height:1">'+(score==null?'\u2014':score)+'</span>'
-      +(big?'<span class="dim" style="font-size:10px;letter-spacing:.6px;margin-top:3px">COMPOSITE</span>':'')
+      +'<span style="font-family:\'Space Grotesk\',sans-serif;font-size:'+(big?40:22)+'px;font-weight:700;line-height:1">'+(score==null?'—':score)+'</span>'
+      +(big?'<span class="dim" style="font-size:10px;letter-spacing:.8px;margin-top:4px">of 36<br>COMPOSITE</span>':'')
       +'</div></div>';
   }
 
-  let goalHtml = '<div class="card"><div class="row" style="justify-content:space-between;align-items:center;margin-bottom:14px"><h2 style="margin:0">Scores</h2>'+themeToggleBtn()+'</div><div class="scoresRow" style="display:flex;gap:20px;align-items:center;flex-wrap:nowrap;overflow-x:auto">'
-    + '<div class="ringComposite" style="text-align:center;flex-shrink:0">'+ring(takenCount?composite:null,'#A98BFF',170,true)
-    + '<div class="dim" style="margin-top:8px;font-size:12px">avg of 4 sections</div></div>'
-    + '<div class="ringSections" style="display:flex;gap:20px;flex-wrap:nowrap">'
-    + SECTS.map(sec=>'<div class="ringSec" style="text-align:center;flex-shrink:0">'+ring(sectionScore[sec],SCOL[sec],116,false)
-        +'<div class="ringLbl" style="margin-top:7px;font-size:12.5px;color:'+SCOL[sec]+';font-weight:600">'+SLABEL[sec]+'</div></div>').join('')
-    + '</div></div>';
-  goalHtml += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)" class="row">';
+  // ---- header row ----
+  const first = esc((ME.full_name||'Student').split(' ')[0]);
+  let h = '<div class="dashhead"><div><h1 class="dash-h1">Welcome back, '+first+'</h1>'
+    +'<p class="dim" style="margin-top:4px">'+(ss.length
+        ? ss.length+' test'+(ss.length===1?'':'s')+' taken · last activity '+ss[ss.length-1].started_at.slice(0,10)
+        : 'Take a diagnostic to unlock your study plan.')+'</p></div>'
+    +'<button class="btn" onclick="document.getElementById(\'takeTestCard\').scrollIntoView({behavior:\'smooth\',block:\'center\'})">→ Start a test</button></div>';
+
+  // ---- composite card + section cards + take-a-test ----
+  const scored = SECTS.filter(sec=>sectionScore[sec]!=null);
+  const maxV = scored.length ? Math.max.apply(null, scored.map(s=>sectionScore[s])) : null;
+  const minV = scored.length ? Math.min.apply(null, scored.map(s=>sectionScore[s])) : null;
+  function chip(sec){
+    const v = sectionScore[sec];
+    if(v==null || scored.length<2 || maxV===minV) return '';
+    if(v===maxV) return '<span class="chip chip-good">strongest</span>';
+    if(v===minV) return '<span class="chip chip-warn">needs work</span>';
+    return '';
+  }
+  let compCard = '<div class="card" style="text-align:center">'+ring(takenCount?composite:null,'#A98BFF',190,true);
   if(goal){
     const gap = goal.target_score - composite;
-    goalHtml += '<span class="gap"><b style="color:var(--acc2)">Goal '+goal.target_score+(goal.target_date?' by '+goal.target_date:'')+'.</b> '
-      +(takenCount<4 ? 'Take all four sections for a true composite.' : (gap<=0?'Composite goal reached \u2014 set a new target!':gap+' composite points to go.'))+'</span>';
-  } else goalHtml += '<span class="dim">No composite goal set yet.</span>';
-  goalHtml += ' <span class="row" style="margin-left:auto"><input type="number" id="goalScore" min="1" max="36" placeholder="Target (1\u201336)" style="width:120px"><input type="date" id="goalDate"><button class="btn2" onclick="saveGoal()">'+(goal?'Update':'Set goal')+'</button></span></div></div>';
+    const pct = takenCount ? Math.max(3, Math.min(100, composite/goal.target_score*100)) : 0;
+    compCard += '<div style="margin-top:16px;display:flex;justify-content:space-between;font-size:13px"><b style="color:var(--acc2)">Goal '+goal.target_score+(goal.target_date?' by '+goal.target_date:'')+'</b><span class="dim">'+(takenCount<4?'take all 4 sections':(gap<=0?'goal reached!':gap+' to go'))+'</span></div>'
+      +'<div class="goalbar" style="margin-top:8px"><i style="width:'+pct+'%"></i></div>';
+    if(goal.target_date){
+      const wk = Math.max(0, Math.ceil((new Date(goal.target_date) - Date.now())/(7*864e5)));
+      compCard += '<p class="dim" style="font-size:12px;margin-top:10px">Averaged across 4 sections · '+wk+' week'+(wk===1?'':'s')+' remaining</p>';
+    }
+  } else compCard += '<p class="dim" style="margin-top:14px">No composite goal set yet.</p>';
+  compCard += '<details style="margin-top:12px;text-align:left"><summary class="dim" style="cursor:pointer;font-size:12.5px">'+(goal?'Edit goal':'Set a goal')+'</summary>'
+    +'<div class="row" style="margin-top:10px"><input type="number" id="goalScore" min="1" max="36" placeholder="Target (1–36)" style="width:110px"><input type="date" id="goalDate"><button class="btn2" onclick="saveGoal()">'+(goal?'Update':'Set goal')+'</button></div></details></div>';
 
-  // trajectory
-  let trajHtml = '';
-  if(ss.length){
-    trajHtml = '<div class="card"><h2>Score Trajectory</h2><div class="trajrow">'+ss.slice(-10).map(s=>{
-      const h = Math.max(8, (s.est_score/36)*100);
-      return '<div class="trajcol"><b style="font-size:13px">'+s.est_score+'</b><div class="trajbar" style="height:'+h+'%"></div><span class="dim" style="font-size:10px">'+esc((s.tests?.name||'').replace(' Form','').slice(0,9))+'<br>'+s.started_at.slice(5,10)+'</span></div>';
-    }).join('')+'</div></div>';
-  }
+  let secCards = '<div class="secgrid">'+SECTS.map(sec=>{
+    const v = sectionScore[sec];
+    const pct = v==null?0:Math.max(3,(v/36)*100);
+    return '<div class="seccard"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><b style="font-size:13.5px">'+SLABEL[sec]+'</b>'+chip(sec)+'</div>'
+      +'<div class="secscore" style="color:'+SCOL[sec]+'">'+(v==null?'—':v)+'<span class="dim" style="font-size:13px;font-weight:400"> /36</span></div>'
+      +'<div class="secbar"><i style="width:'+pct+'%;background:'+SCOL[sec]+'"></i></div></div>';
+  }).join('')+'</div>';
 
-  // take a test
   const ICONS = {
-    english:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B9CFF" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
-    math:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9B84FF" stroke-width="2" stroke-linecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h2M14 11h2M8 15h2M14 15h2M8 19h2M14 19h2"/></svg>',
-    reading:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34C6D3" stroke-width="2" stroke-linecap="round"><path d="M2 4h6a4 4 0 014 4v12a3 3 0 00-3-3H2zM22 4h-6a4 4 0 00-4 4v12a3 3 0 013-3h7z"/></svg>',
-    science:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2FBF8F" stroke-width="2" stroke-linecap="round"><path d="M10 2v7L4.5 19a2 2 0 001.8 3h11.4a2 2 0 001.8-3L14 9V2M8.5 2h7M7 15h10"/></svg>'
+    english:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B9CFF" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+    math:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34C6D3" stroke-width="2" stroke-linecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h2M14 11h2M8 15h2M14 15h2M8 19h2M14 19h2"/></svg>',
+    reading:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E9A13B" stroke-width="2" stroke-linecap="round"><path d="M2 4h6a4 4 0 014 4v12a3 3 0 00-3-3H2zM22 4h-6a4 4 0 00-4 4v12a3 3 0 013-3h7z"/></svg>',
+    science:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A98BFF" stroke-width="2" stroke-linecap="round"><path d="M10 2v7L4.5 19a2 2 0 001.8 3h11.4a2 2 0 001.8-3L14 9V2M8.5 2h7M7 15h10"/></svg>'
   };
-  const testHtml = '<div class="card"><h2>Take a Test</h2><p class="dim" style="margin-bottom:12px">For a full mock ACT Test go in order from English &gt; Math &gt; Reading &gt; Science, you can choose to take them timed or untimed.</p><div class="row">'+TESTS.map(t=>
-    '<button class="btn2 secbtn" onclick="startTest(\''+t.id+'\')">'+(ICONS[t.section]||'')+esc(t.name)+'</button>').join(' ')+
-    '<label class="dim" style="margin-left:8px"><input type="checkbox" id="timedBox" checked> timed</label></div></div>';
+  const bySec = {}; TESTS.forEach(t=>{ (bySec[t.section]=bySec[t.section]||[]).push(t); });
+  window._smxBySec = bySec;
+  let testHtml = '<div class="card" id="takeTestCard"><h2 style="margin-bottom:4px">Take a test</h2>'
+    +'<p class="dim" style="margin-bottom:14px">For a full mock ACT, go in order: English → Math → Reading → Science.</p>'
+    +'<div class="tt-grid">'+SECTS.filter(sec=>bySec[sec]).map(sec=>
+      '<button class="ttile" onclick="tileTest(\''+sec+'\')">'+ICONS[sec]+'<b>'+SLABEL[sec]+'</b><span class="dim" style="font-size:12px">'+SPEC[sec]+'</span></button>').join('')+'</div>'
+    +'<div id="formPick" class="row hidden" style="margin-top:12px"></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:10px">'
+    +'<label class="switchWrap"><input type="checkbox" id="timedBox" checked><span class="swTrack"></span><span style="font-size:13.5px">Timed</span></label>'
+    +(ME.extra_time
+        ? '<span class="chip chip-good" style="font-size:11px">Extra time active · <a class="link" onclick="removeExtraTime()" style="color:inherit;text-decoration:underline">remove</a></span><div class="err" id="extraTimeErr" style="flex-basis:100%"></div>'
+        : '<button class="btn2" style="padding:8px 14px;font-size:12.5px" onclick="document.getElementById(\'etRow\').classList.toggle(\'hidden\')">Extra-time code</button>')
+    +'</div>'
+    +(ME.extra_time ? '' :
+      '<div id="etRow" class="row hidden" style="margin-top:12px"><input type="text" id="extraTimeCode" placeholder="Extra-time code" style="flex:1;max-width:280px" onkeydown="if(event.key===\'Enter\')redeemExtraTime()"><button class="btn2" onclick="redeemExtraTime()">Apply</button><button class="btn2" id="revealEtBtn" onclick="revealExtraTimeCode()">Reveal code</button><div class="err" id="extraTimeErr" style="flex-basis:100%"></div></div>')
+    +'</div>';
 
-  // history
-  const histHtml = '<div class="card"><h2>Test History</h2>'+(ss.length?
+  // ---- trajectory + next-in-plan ----
+  let trajCard = '<div class="card"><div class="card-hd2"><h2 class="cardlabel">Score trajectory</h2>'
+    +'<span class="lgd">'+SECTS.map(sec=>'<span><i style="background:'+SCOL[sec]+'"></i>'+SLABEL[sec]+'</span>').join('')+'</span></div>';
+  if(ss.length){
+    trajCard += '<div class="trajrow">'+ss.slice(-10).map(s=>{
+      const sec = s.tests && s.tests.section;
+      const c = SCOL[sec] || 'var(--acc)';
+      const bh = Math.max(8, (s.est_score/36)*100);
+      return '<div class="trajcol"><b style="font-size:13px">'+s.est_score+'</b><div class="trajbar" style="height:'+bh+'%;background:'+c+'"></div><span class="dim" style="font-size:10px">'+esc(SLABEL[sec]||'').slice(0,7)+'<br>'+s.started_at.slice(5,10)+'</span></div>';
+    }).join('')+'</div>';
+  } else trajCard += '<p class="dim">Your scores chart themselves here after your first test.</p>';
+  trajCard += '</div>';
+
+  let planCard = '<div class="card"><div class="card-hd2"><h2 class="cardlabel">Next in your plan</h2><a class="link" onclick="renderPlans()">View all</a></div>';
+  const steps = plan ? (plan.plan_steps||[]).slice().sort((a,b)=>a.position-b.position).filter(st=>st.status!=='done').slice(0,3) : [];
+  if(steps.length){
+    planCard += steps.map((st,i)=>'<div class="planitem" onclick="renderPlans()"><span class="pn">'+(i+1)+'</span><div><b style="font-size:13.5px">'+esc((st.title||'').replace(/^Fix:\s*/i,''))+'</b></div></div>').join('');
+  } else planCard += '<p class="dim">Take a test and your personalized plan appears here.</p>';
+  planCard += '</div>';
+
+  // ---- history ----
+  const histHtml = '<div class="card"><div class="card-hd2"><h2 class="cardlabel">Test history</h2>'+(ss.length?'<a class="link" onclick="exportHistoryCSV()">Export CSV</a>':'')+'</div>'+(ss.length?
     '<table><tr><th>Date</th><th>Test</th><th>Raw</th><th>Score</th><th>Predicted</th><th></th></tr>'+
     ss.slice().reverse().map(s=>'<tr><td>'+s.started_at.slice(0,10)+'</td><td>'+esc(s.tests?.name||'')+'</td><td>'+s.raw_correct+'/'+s.raw_total+'</td><td><b>'+s.est_score+'</b></td><td style="color:var(--good)">'+s.predicted_score+'</td><td><a class="link" onclick="openSession(\''+s.id+'\')">Report</a></td></tr>').join('')+'</table>'
-    :'<div class="emptystate"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5B9CFF" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><br><b>No tests yet</b><br>Pick a section in “Take a Test” above — your first diagnostic unlocks your study plan and goal ring.</div>')+'</div>';
+    :'<div class="emptystate"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5B9CFF" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><br><b>No tests yet</b><br>Pick a section in “Take a test” above — your first diagnostic unlocks your study plan and goal ring.</div>')+'</div>';
 
-  const extraTimeHtml = '<div class="card"><h2>Extra Time</h2>'
-    + (ME.extra_time
-        ? '<p><b style="color:var(--good)">Extra time is active on your account.</b></p><p class="dim" style="margin-top:6px"><a class="link" onclick="removeExtraTime()">Applied by mistake? Remove extra time</a></p><div class="err" id="extraTimeErr"></div>'
-        : '<p class="dim" style="margin-bottom:10px">Have an extra-time accommodation code? Enter it to add time and a half to every timed test you take.</p>'
-          + '<div class="row"><input type="text" id="extraTimeCode" placeholder="Extra-time code" style="flex:1;max-width:280px" onkeydown="if(event.key===\'Enter\')redeemExtraTime()"><button class="btn2" onclick="redeemExtraTime()">Apply</button><button class="btn2" id="revealEtBtn" onclick="revealExtraTimeCode()">Reveal code</button></div><div class="err" id="extraTimeErr"></div>')
-    + '</div>';
-  el.innerHTML = '<div class="card welcomebanner" style="background:linear-gradient(120deg,rgba(91,156,255,.16),rgba(167,139,250,.13) 55%,rgba(45,212,167,.08));border-color:#2c3d63"><h2 style="margin-bottom:4px">Welcome back, '+esc((ME.full_name||'Student').split(' ')[0])+(ss.length?' <span class="dim" style="font-weight:400;font-size:13px">· '+ss.length+' test'+(ss.length===1?'':'s')+' taken</span>':'')+'</h2><p class="dim">Take a diagnostic, get your miss-by-miss breakdown, and follow your study plan.</p></div>'
-    + goalHtml + testHtml + extraTimeHtml + trajHtml + histHtml;
+  el.innerHTML = h
+    + '<div class="dash-top"><div>'+compCard+'</div><div>'+secCards+testHtml+'</div></div>'
+    + '<div class="dash-mid">'+trajCard+planCard+'</div>'
+    + histHtml;
+}
+function tileTest(sec){
+  const arr = (window._smxBySec||{})[sec]||[];
+  if(arr.length===1) return startTest(arr[0].id);
+  const el = document.getElementById('formPick');
+  el.classList.remove('hidden');
+  el.innerHTML = '<span class="dim" style="font-size:12.5px">Pick a form:</span> '+arr.map(t=>'<button class="btn2" onclick="startTest(\''+t.id+'\')">'+esc(t.name)+'</button>').join(' ');
+}
+function exportHistoryCSV(){
+  const ss = window._smxSessions||[];
+  const rows = [['date','test','raw_correct','raw_total','score','predicted']]
+    .concat(ss.map(s=>[s.started_at.slice(0,10),(s.tests&&s.tests.name)||'',s.raw_correct,s.raw_total,s.est_score,s.predicted_score]));
+  const csv = rows.map(r=>r.map(x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'scoremaxx_history.csv'; a.click();
 }
 function revealExtraTimeCode(){
   const b = document.getElementById('revealEtBtn');
