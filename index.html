@@ -1183,6 +1183,12 @@ body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 #takeTestCard{border-color:var(--acc-line);
   box-shadow:0 0 0 1px rgba(124,92,255,.10), 0 10px 44px -14px rgba(124,92,255,.42), var(--shadow-2), inset 0 1px 0 rgba(255,255,255,.05)}
 .seccard{box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.qfig{max-width:440px;margin:0 auto 14px;text-align:center}
+.qfig svg{width:100%;height:auto;max-height:300px}
+#stemEl svg{max-width:440px;max-height:300px;height:auto;display:block;margin:0 auto}
+#passageEl svg{max-width:100%;max-height:340px;height:auto;display:block;margin:0 auto}
+#choicesEl svg,.choice svg{max-height:120px;max-width:280px;height:auto}
+#v-practice .choice svg{max-height:120px;max-width:280px;height:auto}
 .card-hd2{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 .cardlabel{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:0;font-family:'Inter',sans-serif}
 .lgd{display:flex;gap:12px;font-size:11.5px;color:var(--dim);align-items:center;flex-wrap:wrap}
@@ -1635,11 +1641,13 @@ function go(v){
 // The app zooms with the window: components grow on big screens and ease
 // down on small ones, continuously, instead of sitting at one fixed size.
 function fitZoom(){
-  const landingEl = document.getElementById('v-landing');
-  const onLanding = landingEl && !landingEl.classList.contains('hidden');
+  // Scaling is a dashboard-only behavior: question views keep one fixed,
+  // predictable size so a figure never dwarfs the question under it.
+  const homeEl = document.getElementById('v-home');
+  const onDash = homeEl && !homeEl.classList.contains('hidden');
   const vw = window.innerWidth;
   let z = 1;
-  if(!onLanding){
+  if(onDash){
     if(vw > 1440)      z = Math.min(1.5, vw/1440);      // grow up to 150%
     else if(vw > 1150) z = Math.max(.92, vw/1440);      // ease down slightly
   }
@@ -5515,8 +5523,8 @@ function renderPQ(){
     +'<p class="dim" style="margin-top:8px;font-size:12px">'+hints[mode]+'</p></div>';
   h += '<div class="card">';
   if(q.passage) h += '<div style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;white-space:pre-wrap;font-size:14px;line-height:1.85;color:var(--soft)">'+esc(q.passage)+'</div>';
-  if(q.figure_svg && q.figure_svg.indexOf('<svg')===0) h += '<div style="margin-bottom:14px;text-align:center">'+q.figure_svg+'</div>';
-  if(!q.figure_svg && q.art_payload && typeof renderArt==='function'){ const fsvg = renderArt(q.art_payload, q.id); if(fsvg) h += '<div style="margin-bottom:14px;max-width:560px;margin-left:auto;margin-right:auto">'+fsvg+'</div>'; }
+  if(q.figure_svg && q.figure_svg.indexOf('<svg')===0) h += '<div class="qfig">'+q.figure_svg+'</div>';
+  if(!q.figure_svg && q.art_payload && typeof renderArt==='function'){ const fsvg = renderArt(q.art_payload, q.id); if(fsvg) h += '<div class="qfig">'+fsvg+'</div>'; }
   h += '<div style="font-size:15px;line-height:1.6;margin-bottom:14px">'+esc(q.stem)+'</div>';
   h += workedHtml();
   const locked = (mode==='confidence' && PR.pending!==null);
