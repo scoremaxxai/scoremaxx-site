@@ -1627,7 +1627,25 @@ function go(v){
   if(v!=='plans' && typeof QRAF!=='undefined' && QRAF){ cancelAnimationFrame(QRAF); QRAF=null; }
   ['landing','auth','paywall','home','test','results','tutor','plans','practice','library'].forEach(x=>document.getElementById('v-'+x).classList.toggle('hidden', x!==v));
   document.querySelectorAll('.navlink[data-nav]').forEach(a=>a.classList.toggle('active', a.dataset.nav===v));
+  fitZoom();
   window.scrollTo(0,0); }
+
+// ---------- PROPORTIONAL SCALING ----------
+// The app zooms with the window: components grow on big screens and ease
+// down on small ones, continuously, instead of sitting at one fixed size.
+function fitZoom(){
+  const landingEl = document.getElementById('v-landing');
+  const onLanding = landingEl && !landingEl.classList.contains('hidden');
+  const vw = window.innerWidth;
+  let z = 1;
+  if(!onLanding){
+    if(vw > 1440)      z = Math.min(1.5, vw/1440);      // grow up to 150%
+    else if(vw > 1150) z = Math.max(.92, vw/1440);      // ease down slightly
+  }
+  document.body.style.zoom = (z === 1) ? '' : z.toFixed(3);
+}
+window.addEventListener('resize', fitZoom);
+fitZoom();
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* ScoreMaxx figure renderer — draws math_items.art_payload as inline SVG.
