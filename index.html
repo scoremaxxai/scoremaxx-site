@@ -1209,7 +1209,7 @@ body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 .sp2-top{display:grid;grid-template-columns:1fr 300px;gap:18px;margin-bottom:18px;align-items:stretch}
 .sp2-top .card{margin-bottom:0}
 .sp2-today{border-color:var(--acc-line);box-shadow:0 0 0 1px rgba(124,92,255,.10), 0 10px 44px -14px rgba(124,92,255,.42), var(--shadow-2), inset 0 1px 0 rgba(255,255,255,.05)}
-.sp2-kicker{color:var(--acc2);font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;margin-bottom:10px}
+.sp2-kicker{display:inline-block;color:var(--acc2);font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px;padding:5px 13px;border:1px solid color-mix(in srgb, var(--acc) 45%, transparent);border-radius:999px;background:color-mix(in srgb, var(--acc) 8%, transparent)}
 .sp2-title{margin:0 0 8px;font-size:22px;letter-spacing:-.3px}
 .sp2-desc{color:var(--dim);font-size:13.5px;line-height:1.65;margin:0;max-width:600px}
 .sp2-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
@@ -6236,7 +6236,7 @@ async function renderPlans(){
   el.innerHTML =
     '<div class="sp2-head"><div><h1 class="sp2-h1">StudyMaxx</h1><div class="sp2-sub">'+total+'-day plan · one level unlocks each day</div></div><span class="sp2-date">'+esc(dateStr)+'</span></div>'
    +'<div class="sp2-top">'
-     +'<div class="card sp2-today"><div class="sp2-kicker">✦ Today · Level '+today+'</div><h2 class="sp2-title">'+esc(tTitle)+'</h2><p class="sp2-desc">'+esc(tDesc)+'</p>'
+     +'<div class="card sp2-today"><div><span class="sp2-kicker">Today · Level '+today+'</span></div><h2 class="sp2-title">'+esc(tTitle)+'</h2><p class="sp2-desc">'+esc(tDesc)+'</p>'
        +'<div class="sp2-chips">'+chips.map(c=>'<span class="sp2-chip" style="--cc:'+c[1]+'"><i></i>'+esc(c[0])+'</span>').join('')+'</div>'
        +'<div class="row" style="gap:10px;margin-top:18px">'+primary+((planDone||isAct)?'':'<button class="btn2" onclick="m4dialog('+today+')">Preview</button>')+'</div></div>'
      +'<div class="card sp2-rail">'
