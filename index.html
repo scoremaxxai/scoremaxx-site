@@ -1208,7 +1208,7 @@ body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 .sp2-date{font-size:12px;color:var(--soft);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 12px;white-space:nowrap}
 .sp2-top{display:grid;grid-template-columns:1fr 300px;gap:18px;margin-bottom:18px;align-items:stretch}
 .sp2-top .card{margin-bottom:0}
-.sp2-today,.sp2-rail,.sp2-mapcard{border-color:var(--acc-line);box-shadow:0 0 0 1px rgba(124,92,255,.10), 0 10px 44px -14px rgba(124,92,255,.42), var(--shadow-2), inset 0 1px 0 rgba(255,255,255,.05)}
+.sp2-today,.sp2-rail,.sp2-mapcard,#v-home .card,#v-home .seccard{border-color:var(--acc-line);box-shadow:0 0 0 1px rgba(124,92,255,.10), 0 10px 44px -14px rgba(124,92,255,.42), var(--shadow-2), inset 0 1px 0 rgba(255,255,255,.05)}
 .sp2-kicker{display:inline-block;color:var(--acc2);font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px;padding:5px 13px;border:1px solid color-mix(in srgb, var(--acc) 45%, transparent);border-radius:999px;background:color-mix(in srgb, var(--acc) 8%, transparent)}
 .sp2-title{margin:0 0 8px;font-size:22px;letter-spacing:-.3px}
 .sp2-desc{color:var(--dim);font-size:13.5px;line-height:1.65;margin:0;max-width:600px}
@@ -4711,9 +4711,10 @@ const myFold = foldOf(round[k]);
     }
     pool = mixed.map(it=>adaptMathItem(it, label));
   }
-  // concept 19: fixed rotation — word (circle) → endpoint → grid graph → number
-  // line, repeating in that exact order. Random only within each type.
-  if(conceptNo === 19){
+  // math concept 19: fixed rotation — word (circle) → endpoint → grid graph →
+  // number line, repeating in that exact order. Random only within each type.
+  // (English concept 19 shares the number but not the recipes — skip it.)
+  if(conceptNo === 19 && section !== 'english'){
     const ORDER = ['R03D', 'R03B', 'R03A', 'R03C'];
     const by19 = {};
     items.forEach(it=>{ (by19[it.recipe_id] = by19[it.recipe_id]||[]).push(it); });
@@ -4722,6 +4723,22 @@ const myFold = foldOf(round[k]);
     for(let i=0; gs.some(g=>i<g.length); i++)
       for(const g of gs) if(i<g.length) seq.push(g[i]);
     pool = seq.map(it=>adaptMathItem(it, label));
+  }
+  // english concept 20 (Relative pronouns): strict type rotation A → B → C → D,
+  // restarting at A — one of each relative-pronoun job per sweep, so the four
+  // skills arrive evenly instead of clumping. Random order only inside a type.
+  if(section === 'english' && conceptNo === 20){
+    const ORDER20 = ['RE20A','RE20B','RE20C','RE20D'];
+    const by20 = {};
+    items.forEach(it=>{ (by20[it.recipe_id] = by20[it.recipe_id]||[]).push(it); });
+    // unbiased Fisher–Yates: the sort(random) trick keeps early items early,
+    // which over-serves whatever the seed listed first
+    const fy20 = a => { for(let x=a.length-1;x>0;x--){ const y=Math.floor(Math.random()*(x+1)); const t=a[x]; a[x]=a[y]; a[y]=t; } return a; };
+    const gs20 = ORDER20.map(r=>fy20((by20[r]||[]).slice()));
+    const seq20 = [];
+    for(let i=0; gs20.some(g=>i<g.length); i++)
+      for(const g of gs20) if(i<g.length) seq20.push(g[i]);
+    pool = seq20.map(it=>adaptMathItem(it, label));
   }
   // concept 15 only: draw evenly from the two figure kinds (rect / box) so a
   // 10-question session is always 5 of each, in random order. Other concepts
