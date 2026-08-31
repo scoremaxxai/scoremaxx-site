@@ -1217,6 +1217,15 @@ body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 .sp2-chip i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cc);margin-right:6px;vertical-align:1px}
 .sp2-ldot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:8px;vertical-align:0}
 .sp2-rail{display:flex;flex-direction:column;gap:13px}
+.sp2-cols{display:grid;grid-template-columns:1.35fr 1fr;gap:26px;align-items:start}
+.sp2-upcol{border-left:1px solid var(--line);padding-left:24px}
+.sp2-upcol .planitem{padding:9px 0}
+.sp2-secbar{width:46px;height:3px;border-radius:2px;margin:2px 0 10px;background:var(--sc);box-shadow:0 0 14px -2px var(--sc)}
+.sp2-ringbox{position:relative;display:flex;justify-content:center;margin:2px 0 6px}
+.sp2-ringtxt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.sp2-ringtxt b{font-size:23px;font-weight:800;color:var(--text)}
+.sp2-ringtxt span{font-size:10px;color:var(--dim);line-height:1.35;margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+@media(max-width:980px){.sp2-cols{grid-template-columns:1fr}.sp2-upcol{border-left:none;padding-left:0;border-top:1px solid var(--line);padding-top:14px}}
 .sp2-rrow{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--dim)}
 .sp2-rrow b{font-size:17px;color:var(--text);font-weight:800}
 .sp2-rrow b i{font-style:normal;font-size:12px;color:var(--dim);font-weight:600}
@@ -6233,14 +6242,33 @@ async function renderPlans(){
       :'<button class="btn" onclick="m4dialog('+today+')">Open level '+today+'</button>'; }
   else if(skill) primary='<button class="btn" onclick="m4markToday('+today+');startPractice(\''+skill+'\',\''+m4suggestMode(dd.focus)+'\')">Start level '+today+'</button>';
   else primary='<button class="btn" onclick="m4dialog('+today+')">Open level '+today+'</button>';
+  // "coming up" — the next three levels, dashboard planitem style
+  let upcoming='';
+  for(let d=today+1; d<=Math.min(today+3,total); d++){
+    const u=M4.days[d-1]; if(!u) break;
+    const ut = u.kind==='act' ? 'ACT Test Day' : (u.kind==='retest' ? 'Checkpoint — '+M4_SEC_NAME[u.sec] : ((u.focus&&u.focus.title)||'Core practice'));
+    const ud = u.kind==='act' ? 'The real thing.' : (u.kind==='retest' ? 'Full timed section' : ((u.focus&&u.focus.desc)||''));
+    upcoming += '<div class="planitem" onclick="sp2tap('+d+',this)"><span class="pn">'+d+'</span><div><b style="font-size:13.5px">'+esc(ut)+'</b>'
+      +(ud?'<br><span class="dim" style="font-size:12px">'+esc(String(ud).slice(0,64))+(String(ud).length>64?'\u2026':'')+'</span>':'')+'</div></div>';
+  }
+  const ringPct=Math.max(2,pct);
   el.innerHTML =
-    '<div class="sp2-head"><div><h1 class="sp2-h1">StudyMaxx</h1><div class="sp2-sub">'+total+'-day plan · one level unlocks each day</div></div><span class="sp2-date">'+esc(dateStr)+'</span></div>'
+    '<div class="sp2-head"><div><h1 class="sp2-h1">StudyMaxx</h1><div class="sp2-sub">'+total+'-day plan \u00b7 one level unlocks each day</div></div><span class="sp2-date">'+esc(dateStr)+'</span></div>'
    +'<div class="sp2-top">'
-     +'<div class="card sp2-today"><div><span class="sp2-kicker">Today · Level '+today+'</span></div><h2 class="sp2-title">'+esc(tTitle)+'</h2><p class="sp2-desc">'+esc(tDesc)+'</p>'
-       +'<div class="sp2-chips">'+chips.map(c=>'<span class="sp2-chip" style="--cc:'+c[1]+'"><i></i>'+esc(c[0])+'</span>').join('')+'</div>'
-       +'<div class="row" style="gap:10px;margin-top:18px">'+primary+((planDone||isAct)?'':'<button class="btn2" onclick="m4dialog('+today+')">Preview</button>')+'</div></div>'
+     +'<div class="card sp2-today"><div class="sp2-cols">'
+       +'<div><div><span class="sp2-kicker">Today \u00b7 Level '+today+'</span></div><h2 class="sp2-title">'+esc(tTitle)+'</h2>'
+         +'<div class="sp2-secbar" style="--sc:'+secCol+'"></div>'
+         +'<p class="sp2-desc">'+esc(tDesc)+'</p>'
+         +'<div class="sp2-chips">'+chips.map(c=>'<span class="sp2-chip" style="--cc:'+c[1]+'"><i></i>'+esc(c[0])+'</span>').join('')+'</div>'
+         +'<div class="row" style="gap:10px;margin-top:18px">'+primary+((planDone||isAct)?'':'<button class="btn2" onclick="m4dialog('+today+')">Preview</button>')+'</div></div>'
+       +(upcoming?'<div class="sp2-upcol"><h2 class="cardlabel" style="margin-bottom:6px">Coming up</h2>'+upcoming+'</div>':'')
+     +'</div></div>'
      +'<div class="card sp2-rail">'
-       +'<div class="sp2-rrow"><span><i class="sp2-ldot" style="background:var(--acc2)"></i>Progress</span><b style="color:var(--acc2)">'+pct+'<i>%</i></b></div><div class="bar sp2-bar"><i style="width:'+Math.max(2,pct)+'%;background:linear-gradient(90deg,var(--acc),var(--acc2))"></i></div>'
+       +'<div class="sp2-ringbox"><svg width="116" height="116" viewBox="0 0 116 116">'
+         +'<defs><linearGradient id="sp2rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#9B84FF"/></linearGradient></defs>'
+         +'<circle cx="58" cy="58" r="46" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="9"/>'
+         +'<circle cx="58" cy="58" r="46" fill="none" stroke="url(#sp2rg)" stroke-width="9" stroke-linecap="round" pathLength="100" stroke-dasharray="'+ringPct+' '+(100-ringPct)+'" transform="rotate(-90 58 58)" style="filter:drop-shadow(0 0 7px rgba(124,92,255,.65))"/>'
+         +'</svg><div class="sp2-ringtxt"><b>'+pct+'%</b><span>of plan<br>complete</span></div></div>'
        +'<div class="sp2-rrow"><span><i class="sp2-ldot" style="background:var(--sec-english)"></i>Day</span><b>'+today+' <i>of '+total+'</i></b></div>'
        +'<div class="sp2-rrow"><span><i class="sp2-ldot" style="background:var(--good)"></i>Levels cleared</span><b style="color:var(--good)">'+cleared+'</b></div>'
        +'<div class="sp2-rrow"><span><i class="sp2-ldot" style="background:#EAB308"></i>Test day</span><b style="color:#EAB308">'+esc(testDay)+'</b></div>'
