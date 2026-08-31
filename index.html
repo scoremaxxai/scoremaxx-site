@@ -4724,11 +4724,11 @@ const myFold = foldOf(round[k]);
       for(const g of gs) if(i<g.length) seq.push(g[i]);
     pool = seq.map(it=>adaptMathItem(it, label));
   }
-  // english concept 20 (Relative pronouns): strict type rotation A → B → C → D,
-  // restarting at A — one of each relative-pronoun job per sweep, so the four
-  // skills arrive evenly instead of clumping. Random order only inside a type.
-  if(section === 'english' && conceptNo === 20){
-    const ORDER20 = ['RE20A','RE20B','RE20C','RE20D'];
+  // english concepts 20+ (Relative pronouns, Parallel structure): strict type
+  // rotation A → B → C → D, restarting at A — one of each question type per
+  // sweep, so the four skills arrive evenly. Random order only inside a type.
+  if(section === 'english' && (conceptNo === 20 || conceptNo === 21)){
+    const ORDER20 = ['A','B','C','D'].map(x=>'RE'+conceptNo+x);
     const by20 = {};
     items.forEach(it=>{ (by20[it.recipe_id] = by20[it.recipe_id]||[]).push(it); });
     // unbiased Fisher–Yates: the sort(random) trick keeps early items early,
