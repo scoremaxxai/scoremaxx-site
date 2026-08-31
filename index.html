@@ -3889,7 +3889,7 @@ async function renderHome(){
   if(steps.length){
     planCard += steps.map((st,i)=>{
       const sub = st.description || (st.section ? st.section.charAt(0).toUpperCase()+st.section.slice(1) : '');
-      return '<div class="planitem" onclick="renderPlans()"><span class="pn">'+(i+1)+'</span><div><b style="font-size:13.5px">'+esc((st.title||'').replace(/^Fix:\s*/i,''))+'</b>'
+      return '<div class="planitem" onclick="renderPlans()"><span class="pn">'+(i+1)+'</span><div><b style="font-size:13.5px">'+esc(planTitle(st.title))+'</b>'
         +(sub?'<div class="dim" style="font-size:12px;margin-top:2px">'+esc(String(sub).slice(0,70))+'</div>':'')+'</div></div>';
     }).join('');
   } else planCard += '<p class="dim">Take a test and your personalized plan appears here.</p>';
@@ -4402,6 +4402,15 @@ async function openSession(sessionId){
 let PR = null;
 // Recover the practice topic for a plan step: use the stored skill, or parse it
 // from a "Fix: <skill> (x/y correct)" title so plans made before this update still work.
+// Display name for a plan step: strip the "Fix:" prefix and any trailing score
+// fragment — "(0/2 correct)", "0/2", "(2/5)" — leaving just the topic, capitalized.
+function planTitle(t){
+  let x = String(t||'').replace(/^Fix:\s*/i,'')
+    .replace(/\s*\(\s*\d+\s*\/\s*\d+[^)]*\)\s*$/,'')
+    .replace(/\s*\d+\s*\/\s*\d+\s*(correct)?\s*$/i,'')
+    .replace(/_/g,' ').trim();
+  return x ? x.charAt(0).toUpperCase()+x.slice(1) : x;
+}
 function planSkill(step){
   if(step.skill) return step.skill;
   const t = step.title||'';
@@ -5769,7 +5778,7 @@ function qBuildNodes(pl, goal){
     const isCheck = /retest|practice test/i.test(st.title||'');
     const sk = planSkill(st);
     nodes.push({kind:isCheck?'check':'day', st, day,
-      sub: isCheck ? st.title.replace(/^.*?:\s*/,'') : (sk ? qPretty(sk) : (st.title||'').replace(/^Fix:\s*/i,'').slice(0,18)),
+      sub: isCheck ? st.title.replace(/^.*?:\s*/,'') : (sk ? qPretty(sk) : planTitle(st.title).slice(0,18)),
       done: st.status==='done', sec: null});
     if(!hasNaturalChecks && (i+1)%5===0 && i<steps.length-1){
       const sec = secs[ci++ % 4];
@@ -5983,7 +5992,7 @@ function sqSchedule(pl, goal){
   let totalDays = 30;
   if(goal && goal.target_date){ const td = new Date(goal.target_date+'T00:00:00'); totalDays = Math.round((td-today0)/86400000); }
   totalDays = Math.max(14, Math.min(60, totalDays||30));
-  const focus = rawSteps.map(st=>({title:(st.title||'').replace(/^Fix:\s*/i,''), desc:st.description||'', skill:planSkill(st), st})).filter(f=>f.skill||f.title);
+  const focus = rawSteps.map(st=>({title:planTitle(st.title), desc:st.description||'', skill:planSkill(st), st})).filter(f=>f.skill||f.title);
   const days = []; let fi=0;
   for(let d=1; d<=totalDays; d++){
     if(d===totalDays){ days.push({day:d, kind:'act'}); break; }
@@ -6172,7 +6181,7 @@ function m4build(pl, goal){
   const WK = weekendsOff ? 5 : 7;                       // one retest at the end of each week
   // today = number of study dates on/before now (completion still gates the "current" node in render)
   let today = 0; studyDates.forEach(dt=>{ if(dt<=now) today++; }); today = m4clamp(today, 1, total+1);
-  const focus = raw.map(st=>({title:(st.title||'').replace(/^Fix:\s*/i,''), desc:st.description||'', skill:planSkill(st), st})).filter(f=>f.skill||f.title);
+  const focus = raw.map(st=>({title:planTitle(st.title), desc:st.description||'', skill:planSkill(st), st})).filter(f=>f.skill||f.title);
   const days = []; let fi=0;
   for(let i=0;i<total;i++){
     const d=i+1, dt=studyDates[i];
