@@ -1213,7 +1213,9 @@ body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 .sp2-title{margin:0 0 8px;font-size:22px;letter-spacing:-.3px}
 .sp2-desc{color:var(--dim);font-size:13.5px;line-height:1.65;margin:0;max-width:600px}
 .sp2-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.sp2-chip{font-size:12px;color:var(--soft);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-weight:600}
+.sp2-chip{font-size:12px;border-radius:8px;padding:5px 11px;font-weight:700;color:var(--cc,var(--soft));background:color-mix(in srgb, var(--cc,#98a1b2) 10%, var(--panel2));border:1px solid color-mix(in srgb, var(--cc,#98a1b2) 28%, transparent)}
+.sp2-chip i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cc);margin-right:6px;vertical-align:1px}
+.sp2-ldot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:8px;vertical-align:0}
 .sp2-rail{display:flex;flex-direction:column;gap:13px}
 .sp2-rrow{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--dim)}
 .sp2-rrow b{font-size:17px;color:var(--text);font-weight:800}
@@ -6219,7 +6221,10 @@ async function renderPlans(){
     :(isAct?'Arrive early — ID, calculator, snacks, watch. Trust your prep: today you just collect what you built.'
     :(isMock?'A full timed '+M4_SEC_NAME[dd.sec]+' section. Review every miss afterward — your plan re-prioritizes from your new score.'
     :((dd.focus&&dd.focus.desc)||('A focused 12-question drill on '+String(tTitle).toLowerCase()+', plus the lesson video if you haven’t watched it yet.'))));
-  const chips = isAct?['Official test','Full day']:(isMock?['Full section','Timed',secName]:['12 questions','~18 min',secName+' · Drill']);
+  const secCol = secKey?SP2_SEC_COLOR[secKey]:'#EAB308';
+  const chips = isAct?[['Official test','#EAB308'],['Full day','var(--acc2)']]
+    :(isMock?[['Full section',secCol],['Timed','var(--warn)'],[secName,secCol]]
+    :[['12 questions','var(--acc2)'],['~18 min','var(--warn)'],[secName+' · Drill',secCol]]);
   let primary;
   if(planDone) primary='<button class="btn" onclick="renderHome()">Back to dashboard</button>';
   else if(isAct) primary='<button class="btn" onclick="m4dialog('+today+')">Test day checklist</button>';
@@ -6232,13 +6237,13 @@ async function renderPlans(){
     '<div class="sp2-head"><div><h1 class="sp2-h1">StudyMaxx</h1><div class="sp2-sub">'+total+'-day plan · one level unlocks each day</div></div><span class="sp2-date">'+esc(dateStr)+'</span></div>'
    +'<div class="sp2-top">'
      +'<div class="card sp2-today"><div class="sp2-kicker">✦ Today · Level '+today+'</div><h2 class="sp2-title">'+esc(tTitle)+'</h2><p class="sp2-desc">'+esc(tDesc)+'</p>'
-       +'<div class="sp2-chips">'+chips.map(c=>'<span class="sp2-chip">'+esc(c)+'</span>').join('')+'</div>'
+       +'<div class="sp2-chips">'+chips.map(c=>'<span class="sp2-chip" style="--cc:'+c[1]+'"><i></i>'+esc(c[0])+'</span>').join('')+'</div>'
        +'<div class="row" style="gap:10px;margin-top:18px">'+primary+((planDone||isAct)?'':'<button class="btn2" onclick="m4dialog('+today+')">Preview</button>')+'</div></div>'
      +'<div class="card sp2-rail">'
-       +'<div class="sp2-rrow"><span>Progress</span><b>'+pct+'<i>%</i></b></div><div class="bar sp2-bar"><i style="width:'+Math.max(2,pct)+'%;background:var(--acc)"></i></div>'
-       +'<div class="sp2-rrow"><span>Day</span><b>'+today+' <i>of '+total+'</i></b></div>'
-       +'<div class="sp2-rrow"><span>Levels cleared</span><b>'+cleared+'</b></div>'
-       +'<div class="sp2-rrow"><span>Test day</span><b>'+esc(testDay)+'</b></div>'
+       +'<div class="sp2-rrow"><span><i class="sp2-ldot" style="background:var(--acc2)"></i>Progress</span><b style="color:var(--acc2)">'+pct+'<i>%</i></b></div><div class="bar sp2-bar"><i style="width:'+Math.max(2,pct)+'%;background:linear-gradient(90deg,var(--acc),var(--acc2))"></i></div>'
+       +'<div class="sp2-rrow"><span><i class="sp2-ldot" style="background:var(--sec-english)"></i>Day</span><b>'+today+' <i>of '+total+'</i></b></div>'
+       +'<div class="sp2-rrow"><span><i class="sp2-ldot" style="background:var(--good)"></i>Levels cleared</span><b style="color:var(--good)">'+cleared+'</b></div>'
+       +'<div class="sp2-rrow"><span><i class="sp2-ldot" style="background:#EAB308"></i>Test day</span><b style="color:#EAB308">'+esc(testDay)+'</b></div>'
        +'<div class="sp2-wkrow"><label class="switchWrap"><input type="checkbox" '+(M4.weekendsOff?'':'checked')+' onchange="m4toggleWeekends()"><span class="swTrack"></span><span class="sp2-wklbl">Include weekends</span></label></div>'
      +'</div></div>'
    +'<div class="card sp2-mapcard"><div class="card-hd2"><h2 class="cardlabel">Your Path</h2><a class="link" onclick="sp2adjust()">Adjust plan</a></div><div id="sp2map"></div>'
