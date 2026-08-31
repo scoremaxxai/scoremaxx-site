@@ -1201,6 +1201,57 @@ body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 #stemEl div:has(>svg) svg,#passageEl div:has(>svg) svg{margin:0 auto!important}
 #choicesEl svg,#choicesEl img,.choice svg,.choice img{width:auto!important;height:auto!important;max-height:110px!important;max-width:250px!important}
 #v-practice .choice svg,#v-practice .choice img{max-height:110px!important;max-width:250px!important}
+/* ---- STUDY PLAN v2 (mockup rebuild): today card + rail + serpentine path ---- */
+.sp2-head{display:flex;justify-content:space-between;align-items:flex-end;margin:2px 2px 18px;gap:12px;flex-wrap:wrap}
+.sp2-h1{font-size:30px;font-weight:800;margin:0;letter-spacing:-.5px}
+.sp2-sub{color:var(--dim);font-size:13px;margin-top:4px}
+.sp2-date{font-size:12px;color:var(--soft);background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:6px 12px;white-space:nowrap}
+.sp2-top{display:grid;grid-template-columns:1fr 300px;gap:18px;margin-bottom:18px;align-items:stretch}
+.sp2-top .card{margin-bottom:0}
+.sp2-today{border-color:var(--acc-line);box-shadow:0 0 0 1px rgba(124,92,255,.10), 0 10px 44px -14px rgba(124,92,255,.42), var(--shadow-2), inset 0 1px 0 rgba(255,255,255,.05)}
+.sp2-kicker{color:var(--acc2);font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;margin-bottom:10px}
+.sp2-title{margin:0 0 8px;font-size:22px;letter-spacing:-.3px}
+.sp2-desc{color:var(--dim);font-size:13.5px;line-height:1.65;margin:0;max-width:600px}
+.sp2-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.sp2-chip{font-size:12px;color:var(--soft);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 11px;font-weight:600}
+.sp2-rail{display:flex;flex-direction:column;gap:13px}
+.sp2-rrow{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:var(--dim)}
+.sp2-rrow b{font-size:17px;color:var(--text);font-weight:800}
+.sp2-rrow b i{font-style:normal;font-size:12px;color:var(--dim);font-weight:600}
+.sp2-bar{margin:-6px 0 2px}
+.sp2-wkrow{margin-top:auto;padding-top:6px}
+.sp2-wklbl{font-size:12.5px;color:var(--dim)}
+#sp2map{padding:14px 2px 40px}
+.sp2-row{display:flex;align-items:center}
+.sp2-rlabel{width:46px;flex:0 0 46px;font-size:10.5px;letter-spacing:.1em;color:var(--faint);font-weight:800;text-transform:uppercase}
+.sp2-grid{flex:1;display:grid;align-items:center}
+.sp2-grid>*,.sp2-vgap>*{grid-row:1}
+.sp2-conn{height:3px;margin:0 7px;background-image:radial-gradient(circle,var(--dotc,rgba(255,255,255,.30)) 1.4px,transparent 1.5px);background-size:11px 3px;background-repeat:repeat-x;background-position:left center}
+.sp2-node{width:42px;height:42px;border-radius:50%;border:2px solid var(--ring,rgba(255,255,255,.14));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--text);position:relative;cursor:pointer;justify-self:center;background:var(--panel2);transition:transform .15s var(--ease-out)}
+.sp2-node:hover{transform:translateY(-2px)}
+.sp2-node.locked{color:var(--faint);border-color:rgba(255,255,255,.12);background:transparent}
+.sp2-node.done{border-color:rgba(255,255,255,.14);background:color-mix(in srgb, var(--ring) 18%, var(--panel2));box-shadow:0 0 14px -5px var(--ring), inset 0 0 0 1px rgba(255,255,255,.03)}
+.sp2-node.missed{background:color-mix(in srgb, var(--ring) 10%, var(--panel2))}
+.sp2-node.locked.chk{color:var(--warn)}
+.sp2-ring{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);transform:rotate(-90deg);pointer-events:none}
+.sp2-ring circle{fill:none;stroke-width:2.6;stroke-linecap:round}
+.sp2-ring .trk{stroke:rgba(255,255,255,.08)}
+.sp2-node.missed{border-color:rgba(255,255,255,.14)}
+.sp2-node.current{background:linear-gradient(135deg,#6366f1,#9B84FF);border-color:transparent;color:#fff;box-shadow:0 0 0 4px rgba(124,92,255,.16),0 0 24px -4px rgba(124,92,255,.85)}
+.sp2-node.act{border-color:#EAB308;color:#EAB308;font-size:11px;letter-spacing:.05em;box-shadow:0 0 16px -6px #EAB308}
+.sp2-under{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;white-space:nowrap;pointer-events:none}
+.sp2-dotmark{position:absolute;top:calc(100% + 9px);left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--warn);pointer-events:none}
+.sp2-you{position:absolute;top:calc(100% + 13px);left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#6366f1,#9B84FF);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.07em;padding:4px 10px;border-radius:7px;white-space:nowrap;z-index:3;text-transform:uppercase;pointer-events:none;box-shadow:0 6px 18px -6px rgba(124,92,255,.7)}
+.sp2-you::before{content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-bottom-color:#6366f1}
+.sp2-vgaprow{display:flex}
+.sp2-vgappad{width:46px;flex:0 0 46px}
+.sp2-vgap{flex:1;display:grid;height:34px}
+.sp2-vbar{width:3px;height:64%;align-self:end;margin:0 auto;justify-self:center;background-image:radial-gradient(circle,var(--dotc,rgba(255,255,255,.30)) 1.4px,transparent 1.5px);background-size:3px 11px;background-repeat:repeat-y;background-position:center top}
+.sp2-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:16px}
+.sp2-legend span{display:inline-flex;align-items:center;gap:6px}
+.sp2-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+@media(max-width:980px){.sp2-top{grid-template-columns:1fr}}
+@media(max-width:640px){.sp2-rlabel,.sp2-vgappad{width:34px;flex-basis:34px}.sp2-node{width:38px;height:38px;font-size:13px}.sp2-h1{font-size:24px}}
 .card-hd2{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
 .cardlabel{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:0;font-family:'Inter',sans-serif}
 .lgd{display:flex;gap:12px;font-size:11.5px;color:var(--dim);align-items:center;flex-wrap:wrap}
@@ -3599,8 +3650,8 @@ function toggleViewMode(){
   applyViewMode();
   renderNav();
   // if the quest map is on screen, re-lay it out for the new width (viewport meta needs a beat to apply)
-  if(document.getElementById('m-map') && typeof M4!=='undefined' && M4 && M4.total){
-    setTimeout(()=>{ if(document.getElementById('m-map')) m4boot(); }, 80);
+  if(document.getElementById('sp2map') && typeof M4!=='undefined' && M4 && M4.total){
+    setTimeout(()=>{ if(document.getElementById('sp2map')) m4boot(); }, 80);
   }
 }
 function renderNav(){
@@ -5611,6 +5662,12 @@ function commitP(L, conf){
   if(correct){ PR.streak++; PR.best = Math.max(PR.best, PR.streak); } else { PR.streak = 0; }
   if(PR.newBank && !correct && PR.cur._rats && PR.cur._rats[L]) PR.cur.misconception = PR.cur._rats[L];
   PR.rec.push({q:PR.cur, answer:L, correct, conf:conf||null, time: PR.mode==='timing' ? (PR.qLimit - PR.qRemaining) : null});
+  // live day-completion for the study-plan ring: questions answered vs the day's goal
+  try{ if(window.__questDay){ const q=window.__questDay;
+    let pg={}; try{ pg=JSON.parse(localStorage.getItem('smx_qprog_'+q.planId)||'{}'); }catch(_){}
+    const cur=Math.min(100, Math.round(100*PR.rec.length/(PR.target||12)));
+    if((pg[q.day]||0)<cur){ pg[q.day]=cur; localStorage.setItem('smx_qprog_'+q.planId, JSON.stringify(pg)); }
+  } }catch(_){}
   if(PR.sessionId && !PR.newBank) db.from('practice_attempts').insert({session_id:PR.sessionId, question_id:PR.cur.id, position:PR.rec.length, answer:L, correct}).then(()=>{});
   if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
   renderPQ();
@@ -5625,6 +5682,7 @@ function recordQuestDay(pct, met){
     let mt={}; try{ mt=JSON.parse(localStorage.getItem('smx_qmet_'+q.planId)||'{}'); }catch(_){}
     mt[q.day] = !!met || !!mt[q.day];   // once the goal is hit it stays hit
     localStorage.setItem('smx_qmet_'+q.planId, JSON.stringify(mt));
+    if(mt[q.day]){ let pg={}; try{ pg=JSON.parse(localStorage.getItem('smx_qprog_'+q.planId)||'{}'); }catch(_){} pg[q.day]=100; localStorage.setItem('smx_qprog_'+q.planId, JSON.stringify(pg)); }
     if(typeof db!=='undefined' && ME) db.from('quest_days').upsert({student_id:ME.id, plan_id:q.planId, day_num:q.day, completed:mt[q.day], accuracy:sc[q.day]}, {onConflict:'student_id,plan_id,day_num'}).then(()=>{}).catch(()=>{});
     window.__questDay=null;
   }} }catch(_){}
@@ -6079,6 +6137,7 @@ const M4_ORDER = ['english','math','reading','science'];
 function m4mockSec(day){ return M4_ORDER[(Math.floor(day/7)-1)%4]; }
 const M4_LOCK = '<svg class="m-lock" viewBox="0 0 11 11" shape-rendering="crispEdges"><rect x="3" y="1" width="5" height="1" fill="#cfc6dd"/><rect x="2" y="2" width="2" height="3" fill="#cfc6dd"/><rect x="7" y="2" width="2" height="3" fill="#cfc6dd"/><rect x="1" y="5" width="9" height="5" fill="#e8e0f5"/><rect x="1" y="5" width="9" height="1" fill="#f8f4ff"/><rect x="5" y="6" width="1" height="2" fill="#3a2d52"/></svg>';
 function m4scores(pl){ try{ return JSON.parse(localStorage.getItem('smx_qscore_'+pl.id)||'{}'); }catch(_){ return {}; } }
+function m4prog(pl){ try{ return JSON.parse(localStorage.getItem('smx_qprog_'+pl.id)||'{}'); }catch(_){ return {}; } }
 function m4met(pl){ try{ return JSON.parse(localStorage.getItem('smx_qmet_'+pl.id)||'{}'); }catch(_){ return {}; } }
 function m4weekendsOff(pl){ return localStorage.getItem('smx_weekends_'+pl.id) !== 'on'; } // default: weekends OFF
 function m4build(pl, goal){
@@ -6114,10 +6173,10 @@ function m4build(pl, goal){
       : ['Warm-up: review yesterday\u2019s notes','Core skill practice (20 min)','Challenge problem of the day'];
     days.push({day:d, dt, kind:'day', focus:f, tasks});
   }
-  return {total, today, cleared:m4clamp(today-1,0,total), days, weekendsOff, SCORES:m4scores(pl), MET:m4met(pl), pl, goal};
+  return {total, today, cleared:m4clamp(today-1,0,total), days, weekendsOff, SCORES:m4scores(pl), MET:m4met(pl), PROG:m4prog(pl), pl, goal};
 }
 function m4toggleWeekends(){
-  const on = !m4weekendsOff(M4.pl);          // current 'off' means unchecked; flip
+  const on = m4weekendsOff(M4.pl);           // weekends currently off → turn them on (and vice versa)
   localStorage.setItem('smx_weekends_'+M4.pl.id, on ? 'on' : 'off');
   renderPlans();
 }
@@ -6130,10 +6189,10 @@ async function renderPlans(){
     db.from('goals').select('*').eq('student_id', ME.id).order('created_at',{ascending:false}).limit(1)
   ]);
   if(!plans || !plans.length){
-    el.innerHTML = '<div class="card"><h2>Study Plan</h2><div class="emptystate"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5B9CFF" stroke-width="1.6" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h11"/></svg><br><b>No study plan yet</b><br>Take a diagnostic \u2014 every test generates a personalized plan that lives here.</div></div>';
+    el.innerHTML = '<div class="card"><h2>Study Plan</h2><div class="emptystate"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5B9CFF" stroke-width="1.6" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h11"/></svg><br><b>No study plan yet</b><br>Take a diagnostic — every test generates a personalized plan that lives here.</div></div>';
     return;
   }
-  // hydrate day accuracies from the DB so the color-coded % under each gem persists across devices
+  // hydrate day accuracies from the DB so the color-coded % under each node persists across devices
   try{
     const {data:qd} = await db.from('quest_days').select('day_num, accuracy, completed').eq('student_id', ME.id).eq('plan_id', plans[0].id);
     if(qd && qd.length){
@@ -6145,92 +6204,142 @@ async function renderPlans(){
     }
   }catch(_){}
   M4 = m4build(plans[0], (goals||[])[0]);
+  const total=M4.total, today=m4clamp(M4.today,1,total), cleared=M4.cleared;
+  const pct=Math.round(cleared/total*100);
+  const dd=M4.days[today-1]||{kind:'day'};
   const dateStr = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
-  const stat=(dot,html)=>'<span class="m-stat"><span class="m-dot '+dot+'"></span>'+html+'</span>';
+  const testDay = M4.days[total-1] ? M4.days[total-1].dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
+  const planDone = M4.today>total;
+  const isAct=dd.kind==='act', isMock=dd.kind==='retest';
+  const skill = (!isAct&&!isMock)?m4skillFor(dd):null;
+  const secKey = isMock?dd.sec:(isAct?null:sp2planSec());
+  const secName = secKey?M4_SEC_NAME[secKey]:'All sections';
+  const tTitle = planDone?'Plan complete — nice work':(isAct?'ACT Test Day':(isMock?('Weekly retest — '+M4_SEC_NAME[dd.sec]):((dd.focus&&dd.focus.title)||(skill?qPretty(skill):'Core practice'))));
+  const tDesc = planDone?'Every level is behind you. Keep your edge with free practice until test day — your score is earned in the reps.'
+    :(isAct?'Arrive early — ID, calculator, snacks, watch. Trust your prep: today you just collect what you built.'
+    :(isMock?'A full timed '+M4_SEC_NAME[dd.sec]+' section. Review every miss afterward — your plan re-prioritizes from your new score.'
+    :((dd.focus&&dd.focus.desc)||('A focused 12-question drill on '+String(tTitle).toLowerCase()+', plus the lesson video if you haven’t watched it yet.'))));
+  const chips = isAct?['Official test','Full day']:(isMock?['Full section','Timed',secName]:['12 questions','~18 min',secName+' · Drill']);
+  let primary;
+  if(planDone) primary='<button class="btn" onclick="renderHome()">Back to dashboard</button>';
+  else if(isAct) primary='<button class="btn" onclick="m4dialog('+today+')">Test day checklist</button>';
+  else if(isMock){ const t=(TESTS||[]).filter(x=>x.section===dd.sec)[0];
+    primary = t?'<button class="btn" onclick="m4markToday('+today+');startTest(\''+t.id+'\')">Start retest →</button>'
+      :'<button class="btn" onclick="m4dialog('+today+')">Open level '+today+'</button>'; }
+  else if(skill) primary='<button class="btn" onclick="m4markToday('+today+');startPractice(\''+skill+'\',\''+m4suggestMode(dd.focus)+'\')">Start level '+today+'</button>';
+  else primary='<button class="btn" onclick="m4dialog('+today+')">Open level '+today+'</button>';
   el.innerHTML =
-    '<div class="smap4">'
-    +'<div class="m-card m-banner" style="position:relative"><div class="m-pill m-datepill">'+esc(dateStr)+'</div><h1>StudyMaxx<span class="m-meta"> \u00b7 '+M4.total+'-day plan</span></h1><div class="m-sub">One level unlocks each day. Clear today\'s level to stay on pace \u2014 future levels stay locked until their day arrives.</div></div>'
-    +'<div class="m-card"><div class="m-stats">'
-      +stat('g','Day <b>'+m4clamp(M4.today,1,M4.total)+'</b> of '+M4.total)
-      +stat('v','<b>'+M4.cleared+'</b> cleared')
-      +stat('gr','<b>'+Math.round(M4.cleared/M4.total*100)+'%</b> complete')
-    +'<label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--m-muted);cursor:pointer;user-select:none"><input type="checkbox" '+(M4.weekendsOff?'':'checked')+' onchange="m4toggleWeekends()" style="width:16px;height:16px;accent-color:#9B84FF"> Include weekends</label>'
-    +'</div><div class="m-proglabel">Progress Bar</div><div class="m-prog"><div class="m-fill" style="width:'+(M4.cleared/M4.total*100)+'%"></div></div>'
-    +'<div id="m-map"><svg id="m-trail"></svg></div>'
-    +'<div class="m-nextwrap" id="m-pager"></div></div>'
-    +'<footer><div class="m-legend">'
-      +'<span class="m-lpill red"><span class="m-dot"></span>60% and below</span>'
-      +'<span class="m-lpill yellow"><span class="m-dot"></span>61\u201379%</span>'
-      +'<span class="m-lpill green"><span class="m-dot"></span>80\u2013100%</span>'
-      +'<span class="m-lpill gray"><span class="m-dot"></span>Locked</span>'
-    +'</div>StudyMaxx \u00b7 PeerPath Tutors</footer>'
-    +'</div>';
-  m4boot();
-  const cur = document.querySelector('.smap4 .m-node.current');
+    '<div class="sp2-head"><div><h1 class="sp2-h1">StudyMaxx</h1><div class="sp2-sub">'+total+'-day plan · one level unlocks each day</div></div><span class="sp2-date">'+esc(dateStr)+'</span></div>'
+   +'<div class="sp2-top">'
+     +'<div class="card sp2-today"><div class="sp2-kicker">✦ Today · Level '+today+'</div><h2 class="sp2-title">'+esc(tTitle)+'</h2><p class="sp2-desc">'+esc(tDesc)+'</p>'
+       +'<div class="sp2-chips">'+chips.map(c=>'<span class="sp2-chip">'+esc(c)+'</span>').join('')+'</div>'
+       +'<div class="row" style="gap:10px;margin-top:18px">'+primary+((planDone||isAct)?'':'<button class="btn2" onclick="m4dialog('+today+')">Preview</button>')+'</div></div>'
+     +'<div class="card sp2-rail">'
+       +'<div class="sp2-rrow"><span>Progress</span><b>'+pct+'<i>%</i></b></div><div class="bar sp2-bar"><i style="width:'+Math.max(2,pct)+'%;background:var(--acc)"></i></div>'
+       +'<div class="sp2-rrow"><span>Day</span><b>'+today+' <i>of '+total+'</i></b></div>'
+       +'<div class="sp2-rrow"><span>Levels cleared</span><b>'+cleared+'</b></div>'
+       +'<div class="sp2-rrow"><span>Test day</span><b>'+esc(testDay)+'</b></div>'
+       +'<div class="sp2-wkrow"><label class="switchWrap"><input type="checkbox" '+(M4.weekendsOff?'':'checked')+' onchange="m4toggleWeekends()"><span class="swTrack"></span><span class="sp2-wklbl">Include weekends</span></label></div>'
+     +'</div></div>'
+   +'<div class="card sp2-mapcard"><div class="card-hd2"><h2 class="cardlabel">Your Path</h2><a class="link" onclick="sp2adjust()">Adjust plan</a></div><div id="sp2map"></div>'
+     +'<div class="sp2-legend">'
+       +'<span><i style="background:var(--sec-english)"></i>English</span>'
+       +'<span><i style="background:var(--sec-math)"></i>Math</span>'
+       +'<span><i style="background:var(--sec-reading)"></i>Reading</span>'
+       +'<span><i style="background:var(--sec-science)"></i>Science</span>'
+       +'<span><i style="background:var(--warn)"></i>Checkpoint test</span>'
+       +'<span><i style="background:#EAB308"></i>Test day</span>'
+     +'</div></div>';
+  sp2mapRender();
+  const cur = document.querySelector('.sp2-node.current');
   if(cur) setTimeout(()=>cur.scrollIntoView({block:'center',behavior:'smooth'}), 150);
 }
-function m4layout(){
-  const map = document.getElementById('m-map');
-  const wRaw = map.clientWidth || 600;
-  // mobile: narrower 5-wide grid that fits a phone; desktop: 7-wide centered band. Both paginate.
-  const isMobile = document.body.classList.contains('mview') || wRaw < 620;
-  const cols = isMobile ? 5 : 7;                 // gems per row
-  const ROWS_PER_PAGE = isMobile ? 5 : 6;        // → mobile 25/page, desktop 42/page
-  const capW = isMobile ? 560 : 880;
-  const w = Math.min(wRaw, capW);
-  const xOff = Math.max(0, (wRaw - w) / 2);
-  const N = M4.total;
-  const perPage = cols*ROWS_PER_PAGE;
-  const pages = Math.max(1, Math.ceil(N/perPage));
-  M4.perPage=perPage; M4.pages=pages;
-  // first render: land on the page that holds "today"
-  if(M4.page==null) M4.page=Math.floor((m4clamp(M4.today,1,N)-1)/perPage);
-  M4.page=m4clamp(M4.page,0,pages-1);
-  const start=M4.page*perPage, end=Math.min(start+perPage,N), count=end-start;
-  M4.pageStart=start;
-  const rows=Math.ceil(count/cols);
-  const mX = w<480?40:56, GY=112, usable=w-mX*2;
-  M4.curveScale = 1;                          // fixed spacing → original mobile wobble constants
-  const nodes=[];
-  for(let i=0;i<count;i++){ const gi=start+i; const r=Math.floor(i/cols); let c=i%cols; if(r%2===1)c=cols-1-c; const x=xOff+mX+(cols===1?usable/2:usable*c/(cols-1)); const wob=Math.sin(gi*2.7)*12; const y=52+r*GY+wob; nodes.push({x,y,day:start+i+1}); }
-  map.style.height=(52+rows*GY+30)+'px';
-  M4.nodes=nodes; M4.w=wRaw;
+// section of the plan (from the diagnostic that generated it) — colors regular-day rings
+function sp2planSec(){
+  try{
+    const sess = M4.pl.sessions; const one = Array.isArray(sess)?sess[0]:sess;
+    const n = ((one && one.tests && one.tests.name)||'').toLowerCase();
+    for(const k of M4_ORDER){ if(n.indexOf(k)>=0) return k; }
+  }catch(_){}
+  return 'english';
 }
-function m4trail(){
-  const map=document.getElementById('m-map'), svg=document.getElementById('m-trail'), nodes=M4.nodes;
-  svg.setAttribute('viewBox','0 0 '+map.clientWidth+' '+map.clientHeight);
-  // exact port of study-quest-map_4 drawTrail — wobble keyed to absolute day index + scaled to column spacing
-  const gStart=M4.pageStart||0, sc=M4.curveScale||1;
-  let base='';
-  for(let i=0;i<nodes.length-1;i++){ const a=nodes[i],b=nodes[i+1]; const gi=gStart+i; const mx=(a.x+b.x)/2+Math.sin(gi*1.3)*16*sc, my=(a.y+b.y)/2+Math.cos(gi*1.7)*9*sc; base+='M '+a.x+' '+a.y+' Q '+mx+' '+my+' '+b.x+' '+b.y+' '; }
-  let doneD=''; const doneLocal=m4clamp(M4.cleared-gStart,0,nodes.length);
-  for(let i=0;i<Math.min(doneLocal,nodes.length-1);i++){ const a=nodes[i],b=nodes[i+1]; const gi=gStart+i; const mx=(a.x+b.x)/2+Math.sin(gi*1.3)*16*sc, my=(a.y+b.y)/2+Math.cos(gi*1.7)*9*sc; doneD+='M '+a.x+' '+a.y+' Q '+mx+' '+my+' '+b.x+' '+b.y+' '; }
-  svg.innerHTML='<defs><linearGradient id="m-vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#9B84FF"/></linearGradient></defs>'
-    +'<path d="'+base+'" fill="none" stroke="#241542" stroke-width="13" stroke-linecap="round"/>'
-    +'<path d="'+base+'" fill="none" stroke="#6d55a8" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 12"/>'
-    +'<path d="'+doneD+'" fill="none" stroke="url(#m-vg)" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 12"/>';
+const SP2_SEC_COLOR = {english:'var(--sec-english)', math:'var(--sec-math)', reading:'var(--sec-reading)', science:'var(--sec-science)'};
+// section of one day's lesson — drives that node's ring color (same section colors as the rest of the app)
+function sp2skillSec(sk){
+  sk=String(sk||'').toLowerCase();
+  if(/^english:/.test(sk)) return 'english';
+  if(/^concept:/.test(sk)) return 'math';
+  if(/(comma|verb|apostro|transition|modif|redundan|word|boundar|semicolon|pronoun|tone|delet|specific|punct|clause|grammar|sentence)/.test(sk)) return 'english';
+  if(/(slope|equat|pythag|trig|angle|fraction|percent|ratio|function|geometr|algebra|matrix|exponent|quadr|circle|area|volume|probab|median|mean_|number_line)/.test(sk)) return 'math';
+  if(/(inference|main_idea|detail|vocab|passage|author|reading|paired)/.test(sk)) return 'reading';
+  if(/(data|experiment|hypoth|science|trend|variable|conflict)/.test(sk)) return 'science';
+  return sp2planSec();
 }
-function m4render(){
-  const map=document.getElementById('m-map'), today=M4.today;
-  map.querySelectorAll('.m-node').forEach(n=>n.remove());
-  M4.nodes.forEach(n=>{
-    const dd=M4.days[n.day-1]||{kind:'day'};
-    const el=document.createElement('div'); el.className='m-node';
-    const isAct=dd.kind==='act', isMock=dd.kind==='retest';
-    if(isAct||isMock) el.classList.add('special');
-    if(isAct) el.classList.add('act');
-    const face=isAct?'ACT':(isMock?M4_SEC_ICON[dd.sec]:n.day);
-    const score=M4.SCORES[n.day]; const hasScore=score!=null&&!isNaN(score); const b=m4band(score);
-    let inner='';
-    if(n.day<today){ const goalMet = isAct||isMock || (M4.MET && M4.MET[n.day]); el.classList.add(goalMet?'done':'missed'); inner='<div class="m-disc">'+face+'</div>'; }
-    else if(n.day===today){ el.classList.add('current'); inner='<span class="m-you">You are here</span><div class="m-disc">'+face+'</div>'; }
-    else { el.classList.add('locked'); inner = isAct?'<div class="m-disc">ACT</div>':'<div class="m-disc"></div>'+M4_LOCK; }
-    // below the gem: ONLY the color-coded daily task average (blank until earned)
-    if(hasScore && !isAct) inner+='<span class="m-num" style="color:'+M4_BAND_TEXT[b]+'">'+score+'%</span>';
-    el.innerHTML=inner; el.style.left=n.x+'px'; el.style.top=n.y+'px';
-    el.onclick=()=>m4tap(n,el);
-    map.appendChild(el);
-  });
+function sp2daySec(dd){
+  if(!dd) return sp2planSec();
+  if(dd.kind==='retest') return dd.sec;
+  return sp2skillSec(dd.focus && dd.focus.skill);
+}
+// The serpentine week map: 7 nodes per row (5 on phones), dotted connectors,
+// row-end vertical links, WK labels, section-colored rings, YOU ARE HERE pill.
+function sp2mapRender(){
+  const map=document.getElementById('sp2map'); if(!map||!M4)return;
+  const total=M4.total, today=m4clamp(M4.today,1,total);
+  const cols=(window.innerWidth<640)?5:7;
+  const rows=Math.ceil(total/cols);
+  const gridStyle='grid-template-columns:repeat('+(cols-1)+', 44px 1fr) 44px';
+  let h='';
+  for(let r=0;r<rows;r++){
+    const st=r*cols+1, en=Math.min(st+cols-1,total), n=en-st+1, rev=r%2===1;
+    let cells='';
+    for(let k=0;k<n;k++){
+      const day=st+k, vc=rev?(cols-1-k):k;
+      const dd=M4.days[day-1]||{kind:'day'};
+      const isAct=dd.kind==='act', isMock=dd.kind==='retest';
+      const sec=sp2daySec(dd);
+      let cls='sp2-node', ring='';
+      if(isAct) cls+=' act';
+      if(day<today){ cls+=(isAct||isMock||(M4.MET&&M4.MET[day]))?' done':' missed'; if(!isAct) ring='--ring:'+SP2_SEC_COLOR[sec]; }
+      else if(day===today){ cls+=' current'; }
+      else { cls+=' locked'; if(isMock) cls+=' chk'; }
+      let under='';
+      if(day===today) under='<span class="sp2-you">You are here</span>';
+      else if(isMock) under='<span class="sp2-dotmark"></span>';
+      // completion ring: how far through this day's work the student got
+      let ringSvg='';
+      if(!isAct && day<=today){
+        const met=(isAct||isMock)?(day<today):(M4.MET&&M4.MET[day]);
+        const pr=(day<today&&met)?100:m4clamp(Math.round(M4.PROG&&M4.PROG[day]||0),0,100);
+        const col=(day===today)?'#9B84FF':SP2_SEC_COLOR[sec];
+        ringSvg='<svg class="sp2-ring" viewBox="0 0 54 54"><circle class="trk" cx="27" cy="27" r="24"/>'
+          +(pr>0?'<circle cx="27" cy="27" r="24" pathLength="100" style="stroke:'+col+';stroke-dasharray:'+pr+' '+(100-pr)+'"/>':'')+'</svg>';
+      }
+      cells+='<div class="'+cls+'" style="grid-column:'+(2*vc+1)+';'+ring+'" onclick="sp2tap('+day+',this)">'+ringSvg+(isAct?'ACT':day)+under+'</div>';
+      if(k<n-1){ const vc2=rev?(cols-2-k):k+1;
+        const trail = (day<today) ? ';--dotc:color-mix(in srgb, '+SP2_SEC_COLOR[sp2daySec(M4.days[day-1])]+' 75%, transparent)' : '';
+        cells+='<div class="sp2-conn" style="grid-column:'+(2*Math.min(vc,vc2)+2)+trail+'"></div>'; }
+    }
+    h+='<div class="sp2-row"><span class="sp2-rlabel">Wk '+(r+1)+'</span><div class="sp2-grid" style="'+gridStyle+'">'+cells+'</div></div>';
+    if(en<total){
+      // vertical dotted link at the turn column (under this row's last day)
+      const kEnd=en-st, vcEnd=rev?(cols-1-kEnd):kEnd;
+      const vtrail = (en<today) ? ';--dotc:color-mix(in srgb, '+SP2_SEC_COLOR[sp2daySec(M4.days[en-1])]+' 75%, transparent)' : '';
+      h+='<div class="sp2-vgaprow"><span class="sp2-vgappad"></span><div class="sp2-vgap" style="'+gridStyle+'"><div class="sp2-vbar" style="grid-column:'+(2*vcEnd+1)+vtrail+'"></div></div></div>';
+    }
+  }
+  map.innerHTML=h;
+}
+function sp2tap(day, el){ m4tap({day:day}, el); }
+function sp2adjust(){
+  let ov=document.getElementById('m-overlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='m-overlay'; ov.onclick=e=>{ if(e.target===ov) ov.classList.remove('on'); }; document.body.appendChild(ov); }
+  ov.innerHTML='<div id="m-dialog"><div class="m-bar"><h2>Adjust plan</h2><span class="m-x" onclick="document.getElementById(\'m-overlay\').classList.remove(\'on\')">✕</span></div>'
+    +'<div class="m-dbody">'
+    +'<label class="switchWrap" style="margin:6px 0 14px"><input type="checkbox" '+(M4.weekendsOff?'':'checked')+' onchange="document.getElementById(\'m-overlay\').classList.remove(\'on\');m4toggleWeekends()"><span class="swTrack"></span><span style="font-size:13px;color:#c7cdd9">Include weekends in the plan</span></label>'
+    +'<p style="font-size:13px;line-height:1.7;color:#8b96ad;margin:0 0 6px">Your path re-prioritizes automatically after every weekly checkpoint test. To rebuild it from scratch around a new starting score, take a fresh diagnostic.</p>'
+    +'</div>'
+    +'<div class="m-foot"><button onclick="document.getElementById(\'m-overlay\').classList.remove(\'on\');renderHome()">Take a diagnostic →</button></div></div>';
+  ov.classList.add('on');
 }
 function m4tap(n, el){
   if(n.day>M4.today){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); const w=n.day-M4.today; m4toast('Locked \u2014 unlocks in '+w+' day'+(w>1?'s':'')); return; }
@@ -6610,24 +6719,8 @@ function m4markToday(day){
   window.__questDay = {planId:M4.pl.id, day};   // drill report will record this day's task average
   db.from('quest_days').upsert({student_id:ME.id, plan_id:M4.pl.id, day_num:day, completed:true}, {onConflict:'student_id,plan_id,day_num'}).then(()=>{}).catch(()=>{});
 }
-function m4pager(){
-  const wrap=document.getElementById('m-pager'); if(!wrap)return;
-  if((M4.pages||1)<=1){ wrap.innerHTML=''; return; }   // everything fits — no controls
-  const p=M4.page, last=M4.pages-1;
-  const prevDis=p<=0?' disabled':'', nextDis=p>=last?' disabled':'';
-  const s=M4.pageStart+1, e=Math.min(M4.pageStart+M4.perPage,M4.total);
-  wrap.innerHTML=''
-    +'<button class="m-pagebtn"'+prevDis+' onclick="m4goPage('+(p-1)+')">◀ Prev</button>'
-    +'<span class="m-pagelabel">Days '+s+'–'+e+' · Page '+(p+1)+' of '+M4.pages+'</span>'
-    +'<button class="m-pagebtn"'+nextDis+' onclick="m4goPage('+(p+1)+')">Next ▶</button>';
-}
-function m4goPage(n){
-  M4.page=m4clamp(n,0,(M4.pages||1)-1);
-  m4boot();
-  const map=document.getElementById('m-map'); if(map) map.scrollIntoView({block:'start',behavior:'smooth'});
-}
-function m4boot(){ m4layout(); m4trail(); m4render(); m4pager(); }
-let m4rz; window.addEventListener('resize', ()=>{ if(!M4||!document.getElementById('m-map'))return; clearTimeout(m4rz); m4rz=setTimeout(m4boot,150); });
+function m4boot(){ sp2mapRender(); }
+let m4rz; window.addEventListener('resize', ()=>{ if(!M4||!document.getElementById('sp2map'))return; clearTimeout(m4rz); m4rz=setTimeout(sp2mapRender,150); });
 let plansRefreshT=null;
 function renderPlansSoft(){ clearTimeout(plansRefreshT); plansRefreshT=setTimeout(renderPlans, 500); }
 
