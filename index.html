@@ -4725,10 +4725,10 @@ const myFold = foldOf(round[k]);
     pool = seq.map(it=>adaptMathItem(it, label));
   }
   // english concepts 19–24 (Pronoun reference, Relative pronouns, Parallel
-  // structure, Idiom and usage, Pronoun case, Topic sentences, Support): strict type
+  // structure, Idiom and usage, Pronoun case, Topic sentences, Support, Order): strict type
   // rotation A → B → C → D, restarting at A — one of each question type per
   // sweep, so the four skills arrive evenly. Random order only inside a type.
-  if(section === 'english' && conceptNo >= 19 && conceptNo <= 25){
+  if(section === 'english' && conceptNo >= 19 && conceptNo <= 26){
     const ORDER20 = ['A','B','C','D'].map(x=>'RE'+conceptNo+x);
     const by20 = {};
     items.forEach(it=>{ (by20[it.recipe_id] = by20[it.recipe_id]||[]).push(it); });
