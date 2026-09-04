@@ -6484,6 +6484,40 @@ function openLearn(skill){
     +'<div style="padding:0 22px 20px"><button onclick="document.getElementById(\'learn-overlay\').remove();if(M4)m4markToday(M4.today);startPractice(\''+esc(skill)+'\',\'content\')" style="width:100%;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#9B84FF);border:none;border-radius:12px;padding:13px;cursor:pointer">Now practice this \u2192</button></div></div>';
 }
 
+// ---------- CONCEPT 28: TEST-STRUCTURE SKILLS (a taught unit, no bank) ----
+// The habits that stop students losing points on questions they already knew
+// how to answer. Rendered as an in-app lesson; no questions to drill.
+function openTestSkills28(){
+  const H = (t)=>'<h3 style="font-size:14px;font-weight:800;color:var(--acc2);margin:18px 0 8px;letter-spacing:.02em">'+t+'</h3>';
+  const P = (t)=>'<p style="font-size:13.5px;line-height:1.75;color:var(--soft);margin:0 0 10px">'+t+'</p>';
+  const CARD = (t)=>'<div style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0">'+t+'</div>';
+  const body =
+    P('This one isn\u2019t grammar. These are the habits that stop you from losing points on questions you already knew how to answer.')
+    + H('The four habits')
+    + '<ol style="margin:0 0 6px 18px;padding:0;font-size:13.5px;line-height:1.8;color:var(--soft)">'
+    + '<li style="margin-bottom:7px"><b style="color:var(--text)">Never cross out NO CHANGE on principle.</b> It\u2019s right about 30% of the time \u2014 more often than any other single letter \u2014 and there\u2019s no limit to how many times it can win on one passage.</li>'
+    + '<li style="margin-bottom:7px"><b style="color:var(--text)">Read the sentence before and the sentence after the underline.</b> The answer often lives outside the underlined part.</li>'
+    + '<li style="margin-bottom:7px"><b style="color:var(--text)">Answer the question they asked</b> \u2014 not the one you wish they\u2019d asked.</li>'
+    + '<li style="margin-bottom:7px"><b style="color:var(--text)">On Yes/No questions, both halves have to be true.</b> A right verdict glued to a wrong reason is a wrong answer.</li>'
+    + '</ol>'
+    + H('Pacing \u2014 count in tens')
+    + P('45 minutes, 50 questions \u2014 about 42 seconds each. But nobody can feel 42 seconds go by, so stop counting seconds. Count in tens: <b style=\"color:var(--text)\">ten questions every seven minutes</b>. Glance at the clock at question 10, 20, 30, and 40. More than a minute behind? Speed up right then, not at the end.')
+    + H('Read the choices first')
+    + P('Before you read anything else, look down the four choices and ask what\u2019s the same and what\u2019s changing. <b style=\"color:var(--text)\">The part that changes is the part being tested.</b> Commas sliding around means punctuation. Verbs changing shape means agreement or tense. The choices name the question type before the passage does.')
+    + H('Scenario one \u2014 read one sentence past the underline')
+    + CARD(P('You\u2019re picking a transition word. The sentence before says a drought cut the harvest in half. The underlined sentence says <u>Therefore</u>, the co-op\u2019s revenue rose that year. Read the underlined sentence by itself and \u201cTherefore\u201d seems fine. Now read both sentences together: half a harvest, and revenue went <i>up</i>? Those two things are fighting each other \u2014 you need \u201cHowever.\u201d The whole answer lived in the sentence before, outside the underline.'))
+    + H('Scenario two \u2014 fixing one error and starting another')
+    + CARD(P('The underline reads <u>the committee members was ready to vote</u>. You spot the agreement problem and grab the first choice with \u201cwere\u201d in it \u2014 but that choice actually says \u201cwere ready to vote, and adjourning early.\u201d You fixed the verb and broke the matching-uniform rule at the same time. <b style=\"color:var(--text)\">Read every choice all the way to the period.</b>'))
+    + H('Watch out for')
+    + P('Turning down NO CHANGE because you\u2019ve already picked it twice on this passage. There\u2019s no limit. It\u2019s the single most common answer on the section.');
+  let ov=document.getElementById('learn-overlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='learn-overlay'; ov.style.cssText='position:fixed;inset:0;z-index:85;background:rgba(5,6,9,.78);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Inter,sans-serif'; ov.onclick=e=>{ if(e.target===ov) ov.remove(); }; document.body.appendChild(ov); }
+  ov.innerHTML='<div style="width:min(720px,96vw);max-height:88vh;display:flex;flex-direction:column;background:#14161d;border:1px solid #2c303c;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.6)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px 12px;flex:none"><h2 style="font-size:18px;font-weight:800;color:#eef0f5">Concept 28 \u00b7 Test-structure skills</h2><span onclick="document.getElementById(\'learn-overlay\').remove()" style="cursor:pointer;color:#9aa0ae;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #23262f;border-radius:9px">\u2715</span></div>'
+    +'<div style="padding:0 22px 8px;overflow-y:auto">'+body+'</div>'
+    +'<div style="padding:14px 22px 20px;flex:none;border-top:1px solid var(--line)"><button onclick="document.getElementById(\'learn-overlay\').remove()" style="width:100%;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#9B84FF);border:none;border-radius:12px;padding:13px;cursor:pointer">Got it \u2014 back to the library</button></div></div>';
+}
+
 // ---------- PRACTICE LIBRARY ----------
 // Every math concept, grouped the way the ACT reports them, most-tested first.
 // The list comes from the concepts catalogue; the video for a concept comes
@@ -6663,7 +6697,8 @@ async function renderLibrary(){
       return a.concept_no-b.concept_no;
     });
     elist.forEach(r=>{
-      const live = ELIVE && ELIVE.has(r.concept_no);
+      const isLesson = r.concept_no === 28;   // Test-structure skills: a taught unit, no bank
+      const live = isLesson || (ELIVE && ELIVE.has(r.concept_no));
       const on = LIB_STARS.has('english:'+r.concept_no);
       h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no+' english').toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)'+(live?'':';opacity:.55')+'">'
         + '<span onclick="libToggleStar('+r.concept_no+',event,\'english\')" title="'+(on?'Unpin':'Pin to the top')+'"'
@@ -6674,7 +6709,9 @@ async function renderLibrary(){
         + (r.q_per_form!=null?' · ~'+(+r.q_per_form).toFixed(1)+' per test':'')
         + ' · '+esc(CATSHORT[r.category]||r.category)
         + '</div></div>'
-        + (live
+        + (isLesson
+           ? '<button class="btn" style="flex:none" onclick="openTestSkills28()">📖 Read the lesson</button>'
+           : live
            ? '<button class="btn2" style="flex:none" onclick="openEnglishLearn('+r.concept_no+',\''+esc(String(r.name).replace(/'/g,'\\\''))+'\')">▶ Learn</button>'
              + '<button class="btn" style="flex:none" onclick="startPractice(\'english:'+r.concept_no+'\',\'content\')">Practice →</button>'
            : '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">coming soon</span>')
