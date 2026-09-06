@@ -4475,8 +4475,10 @@ var SUBBANKS = {
 
 async function startConceptPractice(conceptNo, skillKey, mode, subRecipe, section){
   section = section || 'math';
-  const T_ITEMS = section === 'english' ? 'english_items' : 'math_items';
-  const T_RECIPES = section === 'english' ? 'english_recipes' : 'math_recipes';
+  const T_ITEMS = section === 'english' ? 'english_items'
+               : section === 'reading' ? 'reading_items' : 'math_items';
+  const T_RECIPES = section === 'english' ? 'english_recipes'
+               : section === 'reading' ? 'reading_recipes' : 'math_recipes';
   let items = null;
   try{
     const {data} = await db.from(T_ITEMS).select('*').eq('concept_no', conceptNo).eq('is_servable', true);
@@ -4728,7 +4730,31 @@ const myFold = foldOf(round[k]);
   // structure, Idiom and usage, Pronoun case, Topic sentences, Support, Order, Pattern): strict type
   // rotation A → B → C → D, restarting at A — one of each question type per
   // sweep, so the four skills arrive evenly. Random order only inside a type.
-  if(section === 'english' && conceptNo >= 19 && conceptNo <= 27){
+  if(section === 'reading'){
+    // Reading items each carry their own micro-passage. Deal strict
+    // A->B->C->D, but never show the same passage twice in one session:
+    // when the next item in a bucket repeats a passage already used, take
+    // the next unused-passage item from that SAME bucket, so the guard
+    // never costs the rotation a beat.
+    const ORDERR = ['A','B','C','D'].map(x=>'RR'+conceptNo+x);
+    const byR = {}; items.forEach(it=>{ (byR[it.recipe_id] = byR[it.recipe_id]||[]).push(it); });
+    const fyR = a => { for(let x=a.length-1;x>0;x--){ const y=Math.floor(Math.random()*(x+1)); const t=a[x]; a[x]=a[y]; a[y]=t; } return a; };
+    const bucketsR = ORDERR.map(r=>fyR((byR[r]||[]).slice()));
+    const seenCtx = {}, seqR = [];
+    let progressed = true;
+    while(progressed){
+      progressed = false;
+      for(const b of bucketsR){
+        let j = 0;
+        while(j < b.length && b[j].ctx && seenCtx[b[j].ctx]) j++;
+        if(j >= b.length) continue;
+        const it = b.splice(j,1)[0];
+        if(it.ctx) seenCtx[it.ctx] = 1;
+        seqR.push(it); progressed = true;
+      }
+    }
+    pool = seqR.map(it=>adaptReadingItem(it, label));
+  } else   if(section === 'english' && conceptNo >= 19 && conceptNo <= 27){
     const ORDER20 = ['A','B','C','D'].map(x=>'RE'+conceptNo+x);
     const by20 = {};
     items.forEach(it=>{ (by20[it.recipe_id] = by20[it.recipe_id]||[]).push(it); });
@@ -5514,6 +5540,15 @@ function workedHtml(){
     + 'onclick="toggleWorked()">'+esc(w.label)+'</button>' + b + '</div>';
 }
 // math_items row -> the shape renderPQ already understands
+function adaptReadingItem(r, skill){
+  const q = { id:r.item_id, skill, section:'reading', stem:r.stem, passage:r.passage||'',
+    answer_a:String(r.choice_1), answer_b:String(r.choice_2),
+    answer_c:String(r.choice_3), answer_d:String(r.choice_4),
+    correct_choice:LETTERS[(r.answer_index||1)-1], difficulty:Math.min(5, r.tier||2),
+    explanation:'', misconception:null, art_payload:null, _rats:{} };
+  [r.rationale_1,r.rationale_2,r.rationale_3,r.rationale_4].forEach((t,i)=>{ if(t) q._rats[LETTERS[i]]='You '+t+'.'; });
+  return q;
+}
 function adaptMathItem(r, skill){
   const q = { id:r.item_id, skill, section:'math', stem:r.stem,
     answer_a:String(r.choice_1), answer_b:String(r.choice_2),
@@ -5537,6 +5572,10 @@ async function startPractice(skill, mode){
   const emMatch = String(skill).match(/^english:(\d+)$/);
   if(emMatch){
     if(await startConceptPractice(parseInt(emMatch[1],10), origSkill, mode, undefined, 'english')) return;
+  }
+  const rmMatch = String(skill).match(/^reading:(\d+)$/);
+  if(rmMatch){
+    if(await startConceptPractice(parseInt(rmMatch[1],10), origSkill, mode, undefined, 'reading')) return;
   }
   try{
     const {data:m} = await db.from('skill_drill_map').select('*').eq('skill', skill).maybeSingle();
@@ -5590,7 +5629,7 @@ function pqTick(){
     PR.streak = 0;
     PR.rec.push({q:PR.cur, answer:null, correct:false, timeout:true, time:PR.qLimit});
     if(PR.sessionId && !PR.newBank) db.from('practice_attempts').insert({session_id:PR.sessionId, question_id:PR.cur.id, position:PR.rec.length, answer:null, correct:false}).then(()=>{});
-    if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
+    if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else if(PR.section==='reading') db.from('reading_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
     renderPQ();
   }
 }
@@ -5707,7 +5746,7 @@ function commitP(L, conf){
     if((pg[q.day]||0)<cur){ pg[q.day]=cur; localStorage.setItem('smx_qprog_'+q.planId, JSON.stringify(pg)); }
   } }catch(_){}
   if(PR.sessionId && !PR.newBank) db.from('practice_attempts').insert({session_id:PR.sessionId, question_id:PR.cur.id, position:PR.rec.length, answer:L, correct}).then(()=>{});
-  if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
+  if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else if(PR.section==='reading') db.from('reading_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
   renderPQ();
 }
 // record a study-plan day's drill result. pct = accuracy (color-coded % under gem); met = did they
@@ -6536,7 +6575,8 @@ function openTestSkills28(){
 // for that job: it stars a 0.2-per-test concept while the catalogue's four
 // most frequent go unstarred.
 let LIB = null, LIBV = null, LIB_STARS = null, LIB_DB_STARS = false;
-let ELIB = null, ELIVE = null;    // english catalogue + which concepts have banks
+let ELIB = null, ELIVE = null;
+let RLIB = null, RLIVE = null;   // reading catalogue + which concepts have banks    // english catalogue + which concepts have banks
 let LIB_SEC = 'math';             // which section tab is open
 const LIB_CATS = ['Number & Quantity','Algebra','Functions','Geometry',
                   'Statistics & Probability','Integrating Essential Skills'];
@@ -6585,6 +6625,14 @@ async function libLoad(){
     const {data} = await db.from('english_recipes').select('concept_no');
     ELIVE = new Set((data||[]).map(r=>r.concept_no));
   }catch(_){ ELIVE = new Set(); }
+  try{
+    const {data} = await db.from('concepts').select('*').eq('section','reading').order('concept_no');
+    RLIB = data || [];
+  }catch(_){ RLIB = []; }
+  try{
+    const {data} = await db.from('reading_recipes').select('concept_no');
+    RLIVE = new Set((data||[]).map(r=>r.concept_no));
+  }catch(_){ RLIVE = new Set(); }
   // the student's own stars: the table when it exists, localStorage otherwise.
   // Keys are section-qualified ('math:5', 'english:1') because concept numbers
   // repeat across sections.
@@ -6724,8 +6772,41 @@ async function renderLibrary(){
   h += '</div>';
   // ── Reading and Science ── the concept research is underway; the shelves
   // exist so the room is visibly being built
-  [['reading','Reading','36 questions · 4 passages'],
-   ['science','Science','40 questions · 6 passages']].forEach(([k,lab,shape])=>{
+  // ── Reading ── ranked 1..15 by measured frequency across four captured
+  // forms; banks light up as they ship, exactly like English.
+  h += '<div class="lib-sec" data-sec="reading" style="'+(LIB_SEC==='reading'?'':'display:none')+'">';
+  if(RLIB && RLIB.length){
+    h += '<div class="card lib-cat" data-cat="rd"><h2 style="font-size:16px">Reading'
+       + ' <span class="dim" style="font-weight:400;font-size:13px">· '+RLIB.length
+       + ' concepts · ranked by how often the test asks them</span></h2>';
+    const rlist = RLIB.slice().sort((a,b)=>{
+      const sa=LIB_STARS.has('reading:'+a.concept_no)?1:0, sb=LIB_STARS.has('reading:'+b.concept_no)?1:0;
+      if(sb!==sa) return sb-sa;
+      return a.concept_no-b.concept_no;
+    });
+    rlist.forEach(r=>{
+      const live = RLIVE && RLIVE.has(r.concept_no);
+      const on = LIB_STARS.has('reading:'+r.concept_no);
+      h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no+' reading').toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)'+(live?'':';opacity:.55')+'">'
+        + '<span onclick="libToggleStar('+r.concept_no+',event,\'reading\')" title="'+(on?'Unpin':'Pin to the top')+'"'
+        + ' style="cursor:pointer;flex:none;font-size:19px;line-height:1;width:28px;text-align:center;'
+        + (on?'color:#eab308':'color:#4a5266')+'">'+(on?'★':'☆')+'</span>'
+        + '<div style="flex:1;min-width:0"><b>'+esc(r.name)+'</b>'
+        + '<div class="dim" style="font-size:12.5px;margin-top:2px">Concept '+r.concept_no
+        + (r.q_per_form!=null?' · ~'+(+r.q_per_form).toFixed(1)+' per test':'')
+        + ' · '+esc(r.category||'')
+        + '</div></div>'
+        + (live
+           ? '<button class="btn" style="flex:none" onclick="startPractice(\'reading:'+r.concept_no+'\',\'content\')">Practice →</button>'
+           : '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">coming soon</span>')
+        + '</div>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="card"><h2 style="font-size:16px">Reading</h2><p class="dim">36 questions · 4 passages on the enhanced ACT. The Reading concept list is loading — check back in a moment.</p></div>';
+  }
+  h += '</div>';
+  [['science','Science','40 questions · 6 passages']].forEach(([k,lab,shape])=>{
     h += '<div class="lib-sec" data-sec="'+k+'" style="'+(LIB_SEC===k?'':'display:none')+'">'
       +'<div class="card"><h2 style="font-size:16px">'+lab+'</h2>'
       +'<p class="dim">'+shape+' on the enhanced ACT. The '+lab+' concept list is still being researched from real forms — practice banks land here the same way Math and English did: most-tested concepts first.</p>'
