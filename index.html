@@ -1272,6 +1272,14 @@ body.mview header{margin:-14px -12px 18px;padding:10px 12px}
 .planitem .pn{width:22px;height:22px;border-radius:50%;background:var(--acc-dim);color:var(--acc2);font-size:12px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
 .planitem:hover b{color:var(--acc2)}
 @media(max-width:640px){.mainnav{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}}
+
+/* ---- wide-window fit: content stops growing past ~1440px and centres ---- */
+:root{--gut:max(clamp(16px,2.5vw,48px), calc((100vw - 1440px) / 2))}
+.wrap{padding-left:var(--gut);padding-right:var(--gut)}
+header{margin-left:calc(-1*var(--gut));margin-right:calc(-1*var(--gut));padding-left:var(--gut);padding-right:var(--gut)}
+@media(max-width:640px){.wrap{padding-left:12px;padding-right:12px}header{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}}
+body.mview .wrap{padding-left:12px;padding-right:12px}
+body.mview header{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}
 </style>
 </head>
 <body>
@@ -1722,7 +1730,7 @@ function fitZoom(){
   const vw = window.innerWidth;
   let z = 1;
   if(onDash){
-    if(vw > 1440)      z = Math.min(1.5, vw/1440);      // grow up to 150%
+    if(vw > 1600)      z = Math.min(1.1, vw/1600);      // grow a little on big screens (max 110%)
     else if(vw > 1150) z = Math.max(.92, vw/1440);      // ease down slightly
   }
   document.body.style.zoom = (z === 1) ? '' : z.toFixed(3);
