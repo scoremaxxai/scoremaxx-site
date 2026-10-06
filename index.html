@@ -3591,13 +3591,42 @@ async function doPasswordUpdate(){
   errEl.textContent = 'Password updated — signing you in…';
   setTimeout(()=>{ errEl.style.color=''; errEl.textContent=''; location.replace(location.pathname); }, 1200);
 }
-if(location.hash.indexOf('type=recovery') !== -1){ RESET_MODE = true; }
+// A reset link can come back in several shapes, depending on the Supabase
+// email template and auth flow; every one of them must land on "Set a new password".
+//   #access_token=…&type=recovery      implicit flow (default template)
+//   ?token_hash=…&type=recovery        token-hash template
+//   ?code=…                            PKCE flow
+//   #error=…&error_code=otp_expired    link expired / already used (often by an email scanner)
+const AUTH_QS = new URLSearchParams(location.search);
+const AUTH_HS = new URLSearchParams(location.hash.replace(/^#/, ''));
+let RESET_LINK_ERROR = AUTH_HS.get('error_description') || AUTH_QS.get('error_description') || '';
+if(AUTH_HS.get('type') === 'recovery'){ RESET_MODE = true; }   // query-string links are verified in consumeRecoveryLink()
 db.auth.onAuthStateChange((event)=>{
   if(event === 'PASSWORD_RECOVERY') showResetMode();
 });
+async function consumeRecoveryLink(){
+  const th = AUTH_QS.get('token_hash'), code = AUTH_QS.get('code');
+  if(!th && !code) return;
+  let res;
+  if(th) res = await db.auth.verifyOtp({token_hash: th, type: 'recovery'});
+  else   res = await db.auth.exchangeCodeForSession(code);
+  history.replaceState({}, '', location.pathname);
+  if(res.error){ RESET_MODE = false; RESET_LINK_ERROR = res.error.message; return; }
+  if(th || AUTH_QS.get('type') === 'recovery') RESET_MODE = true;
+}
+function showResetLinkError(){
+  const why = RESET_LINK_ERROR; RESET_LINK_ERROR = '';   // show once; a later sign-in boots normally
+  history.replaceState({}, '', location.pathname);
+  goLogin('login');
+  const errEl = document.getElementById('authErr');
+  errEl.textContent = 'That reset link has expired or was already used ('+why.replace(/\+/g,' ')+
+    '). Type your email and click Forgot? to get a fresh one — then open the newest email only.';
+}
 
 async function boot(){
+  if(!RESET_MODE && !RESET_LINK_ERROR){ try{ await consumeRecoveryLink(); }catch(e){ RESET_LINK_ERROR = describeError(e); } }
   if(RESET_MODE){ showResetMode(); return; }
+  if(RESET_LINK_ERROR){ showResetLinkError(); return; }
   const {data:{user}} = await db.auth.getUser();
   if(!user){
     if(location.hash==='#signup' || location.hash==='#login'){ go('auth'); }
@@ -3611,6 +3640,7 @@ async function boot(){
     if(!prof) throw new Error('Your account exists but its profile could not be created ('+(insErr?.message||'unknown')+'). Ask your tutor to check the database.');
   }
   ME = prof; ME.email = user.email;
+  if(RESET_MODE) return;   // a recovery event arrived while we were loading
 
   // ---------- PAYWALL GATE ----------
   const qp = new URLSearchParams(location.search);
