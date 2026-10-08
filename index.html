@@ -101,6 +101,8 @@ body.light .pmode-select{background:#ffffff;border-color:#cbd5e6;color:#20304f}
 .passage::-webkit-scrollbar-track{background:transparent}
 .htmlpassage{white-space:normal!important}
 .htmlpassage table{max-width:100%}
+.htmlpassage table.dt{width:auto;min-width:240px}
+.htmlpassage table.dt th{text-transform:none;letter-spacing:normal;font-size:13px}
 .htmlpassage p{margin:0 0 14px 0;line-height:1.9;text-align:justify}
 .ul{text-decoration:underline;text-decoration-color:#8b96ad;text-underline-offset:3px}
 .ul-active{background:rgba(91,156,255,.20);text-decoration-color:var(--cyan);border-radius:3px}
@@ -134,7 +136,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
 th{color:var(--dim);text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;padding:9px 10px;border-bottom:1px solid var(--line);font-weight:600}
 td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:hover td{background:rgba(124,92,255,.04)}
-.bar{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;min-width:80px}
+.bar:not(rect){height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;min-width:80px}
 .bar i{display:block;height:100%;border-radius:6px;transition:width .6s ease}
 details{margin-bottom:9px}
 summary{cursor:pointer;padding:13px 16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;font-size:14px;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;transition:border .15s}
@@ -4770,13 +4772,13 @@ const myFold = foldOf(round[k]);
   // structure, Idiom and usage, Pronoun case, Topic sentences, Support, Order, Pattern): strict type
   // rotation A → B → C → D, restarting at A — one of each question type per
   // sweep, so the four skills arrive evenly. Random order only inside a type.
-  if(section === 'reading'){
-    // Reading items each carry their own micro-passage. Deal strict
+  if(section === 'reading' || section === 'science'){
+    // Reading and Science items each carry their own micro-passage. Deal strict
     // A->B->C->D, but never show the same passage twice in one session:
     // when the next item in a bucket repeats a passage already used, take
     // the next unused-passage item from that SAME bucket, so the guard
     // never costs the rotation a beat.
-    const ORDERR = ['A','B','C','D'].map(x=>'RR'+conceptNo+x);
+    const ORDERR = ['A','B','C','D'].map(x=>(section==='science'?'SR':'RR')+conceptNo+x);
     const byR = {}; items.forEach(it=>{ (byR[it.recipe_id] = byR[it.recipe_id]||[]).push(it); });
     const fyR = a => { for(let x=a.length-1;x>0;x--){ const y=Math.floor(Math.random()*(x+1)); const t=a[x]; a[x]=a[y]; a[y]=t; } return a; };
     const bucketsR = ORDERR.map(r=>fyR((byR[r]||[]).slice()));
@@ -4793,7 +4795,7 @@ const myFold = foldOf(round[k]);
         seqR.push(it); progressed = true;
       }
     }
-    pool = seqR.map(it=>adaptReadingItem(it, label));
+    pool = seqR.map(it=>adaptReadingItem(it, label, section));
   } else   if(section === 'english' && conceptNo >= 19 && conceptNo <= 27){
     const ORDER20 = ['A','B','C','D'].map(x=>'RE'+conceptNo+x);
     const by20 = {};
@@ -5580,8 +5582,8 @@ function workedHtml(){
     + 'onclick="toggleWorked()">'+esc(w.label)+'</button>' + b + '</div>';
 }
 // math_items row -> the shape renderPQ already understands
-function adaptReadingItem(r, skill){
-  const q = { id:r.item_id, skill, section:'reading', stem:r.stem, passage:r.passage||'',
+function adaptReadingItem(r, skill, section){
+  const q = { id:r.item_id, skill, section:section||'reading', stem:r.stem, passage:r.passage||'',
     answer_a:String(r.choice_1), answer_b:String(r.choice_2),
     answer_c:String(r.choice_3), answer_d:String(r.choice_4),
     correct_choice:LETTERS[(r.answer_index||1)-1], difficulty:Math.min(5, r.tier||2),
@@ -5673,7 +5675,7 @@ function pqTick(){
     PR.streak = 0;
     PR.rec.push({q:PR.cur, answer:null, correct:false, timeout:true, time:PR.qLimit});
     if(PR.sessionId && !PR.newBank) db.from('practice_attempts').insert({session_id:PR.sessionId, question_id:PR.cur.id, position:PR.rec.length, answer:null, correct:false}).then(()=>{});
-    if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else if(PR.section==='reading') db.from('reading_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
+    if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else if(PR.section==='reading') db.from('reading_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else if(PR.section==='science') db.from('science_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
     renderPQ();
   }
 }
@@ -5706,7 +5708,12 @@ function renderPQ(){
     +'<div class="bar" style="margin-top:12px"><i style="width:'+Math.max(3,pct)+'%;background:var(--good)"></i></div>'
     +'<p class="dim" style="margin-top:8px;font-size:12px">'+hints[mode]+'</p></div>';
   h += '<div class="card">';
-  if(q.passage) h += '<div style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;white-space:pre-wrap;font-size:14px;line-height:1.85;color:var(--soft)">'+esc(q.passage)+'</div>';
+  if(q.passage){
+    // bank passages with figures/tables are trusted markup from our own seed
+    // (same as the test renderer's isHtml path); plain-text passages stay escaped
+    const pHtml = /<(table|div|p|svg)\b/i.test(q.passage);
+    h += '<div class="'+(pHtml?'htmlpassage pqpassage':'')+'" style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;'+(pHtml?'':'white-space:pre-wrap;')+'font-size:14px;line-height:1.85;color:var(--soft)">'+(pHtml?q.passage:esc(q.passage))+'</div>';
+  }
   if(q.figure_svg && q.figure_svg.indexOf('<svg')===0) h += '<div class="qfig">'+q.figure_svg+'</div>';
   if(!q.figure_svg && q.art_payload && typeof renderArt==='function'){ const fsvg = renderArt(q.art_payload, q.id); if(fsvg) h += '<div class="qfig">'+fsvg+'</div>'; }
   h += '<div style="font-size:15px;line-height:1.6;margin-bottom:14px">'+esc(q.stem)+'</div>';
@@ -5790,7 +5797,7 @@ function commitP(L, conf){
     if((pg[q.day]||0)<cur){ pg[q.day]=cur; localStorage.setItem('smx_qprog_'+q.planId, JSON.stringify(pg)); }
   } }catch(_){}
   if(PR.sessionId && !PR.newBank) db.from('practice_attempts').insert({session_id:PR.sessionId, question_id:PR.cur.id, position:PR.rec.length, answer:L, correct}).then(()=>{});
-  if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else if(PR.section==='reading') db.from('reading_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
+  if(PR.newBank){ if(PR.section==='english') db.from('english_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else if(PR.section==='reading') db.from('reading_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else if(PR.section==='science') db.from('science_item_seen').upsert({student_id:ME.id, item_id:PR.cur.id}).then(()=>{}).catch(()=>{}); else db.rpc('mark_math_item_seen', {p_student:ME.id, p_item:PR.cur.id}).then(()=>{}).catch(()=>{}); }
   renderPQ();
 }
 // record a study-plan day's drill result. pct = accuracy (color-coded % under gem); met = did they
@@ -6897,8 +6904,8 @@ async function renderLibrary(){
     h += '<div class="card"><h2 style="font-size:16px">Reading</h2><p class="dim">36 questions · 4 passages on the enhanced ACT. The Reading concept list is loading — check back in a moment.</p></div>';
   }
   h += '</div>';
-  // ── Science ── ranked 1..10 by measured frequency across four captured
-  // forms; banks light up as they ship, exactly like English and Reading.
+  // ── Science ── ranked 1..10 by measured frequency across the four official
+  // practice tests; banks light up as they ship, exactly like Reading.
   h += '<div class="lib-sec" data-sec="science" style="'+(LIB_SEC==='science'?'':'display:none')+'">';
   if(SLIB && SLIB.length){
     h += '<div class="card lib-cat" data-cat="sc"><h2 style="font-size:16px">Science'
@@ -6910,8 +6917,7 @@ async function renderLibrary(){
       return a.concept_no-b.concept_no;
     });
     slist.forEach(r=>{
-      const isLesson = r.concept_no === 10;   // Test-structure skills: a taught unit, no bank
-      const live = isLesson || (SLIVE && SLIVE.has(r.concept_no));
+      const live = SLIVE && SLIVE.has(r.concept_no);
       const on = LIB_STARS.has('science:'+r.concept_no);
       h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no+' science').toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)'+(live?'':';opacity:.55')+'">'
         + '<span onclick="libToggleStar('+r.concept_no+',event,\'science\')" title="'+(on?'Unpin':'Pin to the top')+'"'
@@ -6922,9 +6928,7 @@ async function renderLibrary(){
         + (r.q_per_form!=null?' · ~'+(+r.q_per_form).toFixed(1)+' per test':'')
         + ' · '+esc(r.category||'')
         + '</div></div>'
-        + (isLesson
-           ? '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">lesson coming soon</span>'
-           : live
+        + (live
            ? '<button class="btn" style="flex:none" onclick="startPractice(\'science:'+r.concept_no+'\',\'content\')">Practice →</button>'
            : '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">coming soon</span>')
         + '</div>';
