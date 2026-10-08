@@ -4514,9 +4514,11 @@ var SUBBANKS = {
 async function startConceptPractice(conceptNo, skillKey, mode, subRecipe, section){
   section = section || 'math';
   const T_ITEMS = section === 'english' ? 'english_items'
-               : section === 'reading' ? 'reading_items' : 'math_items';
+               : section === 'reading' ? 'reading_items'
+               : section === 'science' ? 'science_items' : 'math_items';
   const T_RECIPES = section === 'english' ? 'english_recipes'
-               : section === 'reading' ? 'reading_recipes' : 'math_recipes';
+               : section === 'reading' ? 'reading_recipes'
+               : section === 'science' ? 'science_recipes' : 'math_recipes';
   let items = null;
   try{
     const {data} = await db.from(T_ITEMS).select('*').eq('concept_no', conceptNo).eq('is_servable', true);
@@ -5615,6 +5617,10 @@ async function startPractice(skill, mode){
   if(rmMatch){
     if(await startConceptPractice(parseInt(rmMatch[1],10), origSkill, mode, undefined, 'reading')) return;
   }
+  const smMatch = String(skill).match(/^science:(\d+)$/);
+  if(smMatch){
+    if(await startConceptPractice(parseInt(smMatch[1],10), origSkill, mode, undefined, 'science')) return;
+  }
   try{
     const {data:m} = await db.from('skill_drill_map').select('*').eq('skill', skill).maybeSingle();
     if(m && m.drill_topic) topic = m.drill_topic;
@@ -6649,7 +6655,8 @@ function openTestSkills15(){
 // most frequent go unstarred.
 let LIB = null, LIBV = null, LIB_STARS = null, LIB_DB_STARS = false;
 let ELIB = null, ELIVE = null;
-let RLIB = null, RLIVE = null;   // reading catalogue + which concepts have banks    // english catalogue + which concepts have banks
+let RLIB = null, RLIVE = null;   // reading catalogue + which concepts have banks
+let SLIB = null, SLIVE = null;   // science catalogue + which concepts have banks
 let LIB_SEC = 'math';             // which section tab is open
 const LIB_CATS = ['Number & Quantity','Algebra','Functions','Geometry',
                   'Statistics & Probability','Integrating Essential Skills'];
@@ -6706,6 +6713,14 @@ async function libLoad(){
     const {data} = await db.from('reading_recipes').select('concept_no');
     RLIVE = new Set((data||[]).map(r=>r.concept_no));
   }catch(_){ RLIVE = new Set(); }
+  try{
+    const {data} = await db.from('concepts').select('*').eq('section','science').order('concept_no');
+    SLIB = data || [];
+  }catch(_){ SLIB = []; }
+  try{
+    const {data} = await db.from('science_recipes').select('concept_no');
+    SLIVE = new Set((data||[]).map(r=>r.concept_no));
+  }catch(_){ SLIVE = new Set(); }
   // the student's own stars: the table when it exists, localStorage otherwise.
   // Keys are section-qualified ('math:5', 'english:1') because concept numbers
   // repeat across sections.
@@ -6882,12 +6897,43 @@ async function renderLibrary(){
     h += '<div class="card"><h2 style="font-size:16px">Reading</h2><p class="dim">36 questions · 4 passages on the enhanced ACT. The Reading concept list is loading — check back in a moment.</p></div>';
   }
   h += '</div>';
-  [['science','Science','40 questions · 6 passages']].forEach(([k,lab,shape])=>{
-    h += '<div class="lib-sec" data-sec="'+k+'" style="'+(LIB_SEC===k?'':'display:none')+'">'
-      +'<div class="card"><h2 style="font-size:16px">'+lab+'</h2>'
-      +'<p class="dim">'+shape+' on the enhanced ACT. The '+lab+' concept list is still being researched from real forms — practice banks land here the same way Math and English did: most-tested concepts first.</p>'
-      +'<span class="dim" style="font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px;display:inline-block">coming soon</span></div></div>';
-  });
+  // ── Science ── ranked 1..10 by measured frequency across four captured
+  // forms; banks light up as they ship, exactly like English and Reading.
+  h += '<div class="lib-sec" data-sec="science" style="'+(LIB_SEC==='science'?'':'display:none')+'">';
+  if(SLIB && SLIB.length){
+    h += '<div class="card lib-cat" data-cat="sc"><h2 style="font-size:16px">Science'
+       + ' <span class="dim" style="font-weight:400;font-size:13px">· '+SLIB.length
+       + ' concepts · ranked by how often the test asks them</span></h2>';
+    const slist = SLIB.slice().sort((a,b)=>{
+      const sa=LIB_STARS.has('science:'+a.concept_no)?1:0, sb=LIB_STARS.has('science:'+b.concept_no)?1:0;
+      if(sb!==sa) return sb-sa;
+      return a.concept_no-b.concept_no;
+    });
+    slist.forEach(r=>{
+      const isLesson = r.concept_no === 10;   // Test-structure skills: a taught unit, no bank
+      const live = isLesson || (SLIVE && SLIVE.has(r.concept_no));
+      const on = LIB_STARS.has('science:'+r.concept_no);
+      h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no+' science').toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)'+(live?'':';opacity:.55')+'">'
+        + '<span onclick="libToggleStar('+r.concept_no+',event,\'science\')" title="'+(on?'Unpin':'Pin to the top')+'"'
+        + ' style="cursor:pointer;flex:none;font-size:19px;line-height:1;width:28px;text-align:center;'
+        + (on?'color:#eab308':'color:#4a5266')+'">'+(on?'★':'☆')+'</span>'
+        + '<div style="flex:1;min-width:0"><b>'+esc(r.name)+'</b>'
+        + '<div class="dim" style="font-size:12.5px;margin-top:2px">Concept '+r.concept_no
+        + (r.q_per_form!=null?' · ~'+(+r.q_per_form).toFixed(1)+' per test':'')
+        + ' · '+esc(r.category||'')
+        + '</div></div>'
+        + (isLesson
+           ? '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">lesson coming soon</span>'
+           : live
+           ? '<button class="btn" style="flex:none" onclick="startPractice(\'science:'+r.concept_no+'\',\'content\')">Practice →</button>'
+           : '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">coming soon</span>')
+        + '</div>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="card"><h2 style="font-size:16px">Science</h2><p class="dim">40 questions · 6 passages on the enhanced ACT. The Science concept list is loading — check back in a moment.</p></div>';
+  }
+  h += '</div>';
   el.innerHTML = h;
 }
 function libShowSection(sec){
