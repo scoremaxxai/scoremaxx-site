@@ -101,8 +101,17 @@ body.light .pmode-select{background:#ffffff;border-color:#cbd5e6;color:#20304f}
 .passage::-webkit-scrollbar-track{background:transparent}
 .htmlpassage{white-space:normal!important}
 .htmlpassage table{max-width:100%}
-.htmlpassage table.dt{width:auto;min-width:240px}
-.htmlpassage table.dt th{text-transform:none;letter-spacing:normal;font-size:13px}
+/* figure tables are data, not app chrome: undo the global table styling */
+.gfx{overflow-x:auto}
+.gfx table{display:table;width:auto;min-width:0;max-width:100%;margin:8px auto;border-collapse:collapse}
+.gfx th,.gfx td{text-transform:none;letter-spacing:normal;font-size:13.5px;padding:5px 9px;border:1px solid #b9bec9;color:#15181f;vertical-align:middle}
+.gfx th{background:#e6e8ee;font-weight:700;text-align:center}
+.gfx td{background:#f6f7f9;text-align:right}
+.gfx tr:hover td{background:#f6f7f9}
+.pqpassage .gfx svg{max-width:400px;max-height:290px;display:block;margin:0 auto}
+.pqpassage table{max-width:100%}
+.chsvg{display:inline-block;vertical-align:middle}
+.chsvg svg{width:150px;height:96px;display:block}
 .htmlpassage p{margin:0 0 14px 0;line-height:1.9;text-align:justify}
 .ul{text-decoration:underline;text-decoration-color:#8b96ad;text-underline-offset:3px}
 .ul-active{background:rgba(91,156,255,.20);text-decoration-color:var(--cyan);border-radius:3px}
@@ -136,8 +145,10 @@ table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
 th{color:var(--dim);text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;padding:9px 10px;border-bottom:1px solid var(--line);font-weight:600}
 td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:hover td{background:rgba(124,92,255,.04)}
-.bar:not(rect){height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;min-width:80px}
-.bar i{display:block;height:100%;border-radius:6px;transition:width .6s ease}
+/* a div, not an SVG rect: Science charts also use class="bar" and CSS
+   height applies to SVG geometry in Chrome */
+div.bar{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;min-width:80px}
+div.bar i{display:block;height:100%;border-radius:6px;transition:width .6s ease}
 details{margin-bottom:9px}
 summary{cursor:pointer;padding:13px 16px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;font-size:14px;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;transition:border .15s}
 summary:hover{border-color:var(--acc)}
@@ -613,13 +624,13 @@ body:has(#v-landing:not(.hidden)) header{display:none}
 #v-landing .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0}
 #v-landing .bar-val{font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-2);line-height:1}
 #v-landing .bar-slot{height:150px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
-#v-landing .bar{
+#v-landing div.bar{
   width:100%;max-width:40px;border-radius:5px 5px 2px 2px;
   height:0; animation:growH 620ms var(--ease-out) forwards;
   transition:filter 140ms ease;
 }
 @keyframes growH{to{height:var(--h)}}
-@media (hover:hover) and (pointer:fine){#v-landing .bar-col:hover .bar{filter:brightness(1.22)}}
+@media (hover:hover) and (pointer:fine){#v-landing .bar-col:hover div.bar{filter:brightness(1.22)}}
 #v-landing .bar-lbl{font-size:10.5px;color:var(--text-3);margin-top:8px;text-align:center;line-height:1.35}
 #v-landing .bar-lbl b{display:block;color:var(--text-2);font-weight:540;font-size:11px}
 #v-landing .legend{display:flex;gap:16px;flex-wrap:wrap}
@@ -1128,7 +1139,7 @@ body:has(#v-landing:not(.hidden)) header{display:none}
   .rise{opacity:1;transform:none}
   .ring-fill{stroke-dashoffset:119.4}
   .goal-bar i{width:90%}
-  .bar{height:var(--h)}
+  div.bar{height:var(--h)}
   .spark i{width:var(--w)}
 }
 @media (prefers-reduced-transparency:reduce){#v-landing .topbar{background:#0a0b10;backdrop-filter:none}}
@@ -4773,7 +4784,7 @@ const myFold = foldOf(round[k]);
   // rotation A → B → C → D, restarting at A — one of each question type per
   // sweep, so the four skills arrive evenly. Random order only inside a type.
   if(section === 'reading' || section === 'science'){
-    // Reading and Science items each carry their own micro-passage. Deal strict
+    // Reading and Science items each carry their own passage or figure. Deal strict
     // A->B->C->D, but never show the same passage twice in one session:
     // when the next item in a bucket repeats a passage already used, take
     // the next unused-passage item from that SAME bucket, so the guard
@@ -4782,16 +4793,45 @@ const myFold = foldOf(round[k]);
     const byR = {}; items.forEach(it=>{ (byR[it.recipe_id] = byR[it.recipe_id]||[]).push(it); });
     const fyR = a => { for(let x=a.length-1;x>0;x--){ const y=Math.floor(Math.random()*(x+1)); const t=a[x]; a[x]=a[y]; a[y]=t; } return a; };
     const bucketsR = ORDERR.map(r=>fyR((byR[r]||[]).slice()));
+    // What KIND of figure an item carries — a line graph, a histogram, a
+    // table. Three of the four recipes in some concepts are table-heavy, and
+    // without this a session can serve seven tables in a row.
+    const kindCache = {};
+    const kindOf = it => {
+      if(kindCache[it.ctx] !== undefined) return kindCache[it.ctx];
+      const p = it.passage || '';
+      const d = /<desc>([^.]+)\./.exec(p);
+      let k;
+      if(d) k = d[1].trim();
+      else if((p.match(/<table/g)||[]).length >= 2) k = 'two tables';
+      else if(/rowspan/.test(p)) k = 'matrix table';
+      else k = 'list table';
+      return (kindCache[it.ctx] = k);
+    };
     const seenCtx = {}, seqR = [];
-    let progressed = true;
+    let progressed = true, lastKind = '', run = 0;
     while(progressed){
       progressed = false;
       for(const b of bucketsR){
-        let j = 0;
-        while(j < b.length && b[j].ctx && seenCtx[b[j].ctx]) j++;
-        if(j >= b.length) continue;
-        const it = b.splice(j,1)[0];
+        // the first item whose figure has not been shown. Two of a kind in a
+        // row is what a real form does; a THIRD is where a session starts to
+        // feel like one long table, so only that is steered away from —
+        // steering on every question skews which figures get served, and with
+        // them the answer-key spread.
+        const avoid = (run >= 2) ? lastKind : null;
+        let j = 0, fallback = -1;
+        for(; j < b.length; j++){
+          if(b[j].ctx && seenCtx[b[j].ctx]) continue;
+          if(fallback < 0) fallback = j;
+          if(avoid === null || kindOf(b[j]) !== avoid) break;
+        }
+        const pick = (j < b.length) ? j : fallback;
+        if(pick < 0) continue;
+        const it = b.splice(pick,1)[0];
         if(it.ctx) seenCtx[it.ctx] = 1;
+        const k = kindOf(it);
+        run = (k === lastKind) ? run + 1 : 1;
+        lastKind = k;
         seqR.push(it); progressed = true;
       }
     }
@@ -4841,6 +4881,10 @@ const myFold = foldOf(round[k]);
 // over the answer to the question on screen.
 function chText(v){
   const t = String(v == null ? '' : v);
+  // a "which graph represents it?" choice IS a little graph: our own generated
+  // SVG, so it goes through unescaped
+  if (t.slice(0, 4) === '<svg' && t.slice(-6) === '</svg>')
+    return '<span class="chsvg">' + t + '</span>';
   // a matrix answer arrives as real newlines and starts with a bracket: keep
   // the breaks and set it monospace so the columns line up under each other
   if (t.charAt(0) === '[' && t.indexOf('\n') >= 0)
@@ -5709,10 +5753,14 @@ function renderPQ(){
     +'<p class="dim" style="margin-top:8px;font-size:12px">'+hints[mode]+'</p></div>';
   h += '<div class="card">';
   if(q.passage){
-    // bank passages with figures/tables are trusted markup from our own seed
-    // (same as the test renderer's isHtml path); plain-text passages stay escaped
-    const pHtml = /<(table|div|p|svg)\b/i.test(q.passage);
-    h += '<div class="'+(pHtml?'htmlpassage pqpassage':'')+'" style="background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;'+(pHtml?'':'white-space:pre-wrap;')+'font-size:14px;line-height:1.85;color:var(--soft)">'+(pHtml?q.passage:esc(q.passage))+'</div>';
+    // Science figures (and any Reading passage built as markup) arrive as HTML;
+    // plain prose still needs its line breaks kept
+    const ph = /<(table|div|p)\b/i.test(q.passage);
+    h += '<div class="pqpassage'+(ph?' htmlpassage':'')+'" style="background:var(--panel2);'
+       + 'border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;'
+       + (ph?'':'white-space:pre-wrap;')
+       + 'font-size:14px;line-height:1.85;color:var(--soft)">'
+       + (ph ? q.passage : esc(q.passage)) + '</div>';
   }
   if(q.figure_svg && q.figure_svg.indexOf('<svg')===0) h += '<div class="qfig">'+q.figure_svg+'</div>';
   if(!q.figure_svg && q.art_payload && typeof renderArt==='function'){ const fsvg = renderArt(q.art_payload, q.id); if(fsvg) h += '<div class="qfig">'+fsvg+'</div>'; }
@@ -6904,8 +6952,8 @@ async function renderLibrary(){
     h += '<div class="card"><h2 style="font-size:16px">Reading</h2><p class="dim">36 questions · 4 passages on the enhanced ACT. The Reading concept list is loading — check back in a moment.</p></div>';
   }
   h += '</div>';
-  // ── Science ── ranked 1..10 by measured frequency across the four official
-  // practice tests; banks light up as they ship, exactly like Reading.
+  // ── Science ── ranked 1..10 by measured frequency across four captured
+  // forms; banks light up as they ship, exactly like English and Reading.
   h += '<div class="lib-sec" data-sec="science" style="'+(LIB_SEC==='science'?'':'display:none')+'">';
   if(SLIB && SLIB.length){
     h += '<div class="card lib-cat" data-cat="sc"><h2 style="font-size:16px">Science'
@@ -6917,7 +6965,8 @@ async function renderLibrary(){
       return a.concept_no-b.concept_no;
     });
     slist.forEach(r=>{
-      const live = SLIVE && SLIVE.has(r.concept_no);
+      const isLesson = r.concept_no === 10;   // Test-structure skills: a taught unit, no bank
+      const live = isLesson || (SLIVE && SLIVE.has(r.concept_no));
       const on = LIB_STARS.has('science:'+r.concept_no);
       h += '<div class="lib-row" data-q="'+esc((r.name+' '+r.concept_no+' science').toLowerCase())+'" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line)'+(live?'':';opacity:.55')+'">'
         + '<span onclick="libToggleStar('+r.concept_no+',event,\'science\')" title="'+(on?'Unpin':'Pin to the top')+'"'
@@ -6928,7 +6977,9 @@ async function renderLibrary(){
         + (r.q_per_form!=null?' · ~'+(+r.q_per_form).toFixed(1)+' per test':'')
         + ' · '+esc(r.category||'')
         + '</div></div>'
-        + (live
+        + (isLesson
+           ? '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">lesson coming soon</span>'
+           : live
            ? '<button class="btn" style="flex:none" onclick="startPractice(\'science:'+r.concept_no+'\',\'content\')">Practice →</button>'
            : '<span class="dim" style="flex:none;font-size:12.5px;border:1px dashed var(--line);border-radius:9px;padding:6px 10px">coming soon</span>')
         + '</div>';
